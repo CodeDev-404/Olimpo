@@ -52,8 +52,8 @@ new class extends Component
                     </x-slot>
 
                     <x-slot name="content">
-                        <x-dropdown-link :href="route('profile')" wire:navigate>
-                            {{ __('Profile') }}
+                        <x-dropdown-link :href="route('olimpo.mi-cuenta')" wire:navigate>
+                            Cuenta
                         </x-dropdown-link>
 
                         <!-- Authentication -->
@@ -94,8 +94,8 @@ new class extends Component
             </div>
 
             <div class="mt-3 space-y-1">
-                <x-responsive-nav-link :href="route('profile')" wire:navigate>
-                    {{ __('Profile') }}
+                <x-responsive-nav-link :href="route('olimpo.mi-cuenta')" wire:navigate>
+                    Cuenta
                 </x-responsive-nav-link>
 
                 <!-- Authentication -->

@@ -9,7 +9,7 @@ class Ocurrencia extends Model
     protected $fillable = [
         'fecha', 'hora_ingreso', 'hora_salida', 'persona_id',
         'persona_nombre', 'tipo', 'otro', 'detalles', 'observacion', 'turno', 'mes', 'anio',
-        'vehiculo', 'destino', 'motivo'
+        'vehiculo', 'destino', 'motivo', 'user_id', 'es_nota', 'nota_texto'
     ];
 
     public function persona()
@@ -20,6 +20,11 @@ class Ocurrencia extends Model
     public function tipoOcurrencia()
     {
         return $this->belongsTo(TipoOcurrencia::class, 'tipo_id');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function scopeDeUltimas24h($query)

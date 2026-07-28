@@ -18,7 +18,7 @@ class ImportModal extends Component
     public $selectedRows = [];
     public $importing = false;
 
-    protected $listeners = ['openImportModal' => 'open'];
+    protected $listeners = ['openImportModal' => 'open', 'openImportModalFor' => 'openForPanel'];
 
     protected $rules = [
         'file' => 'required|mimes:xlsx,xls,csv|max:5120',
@@ -78,6 +78,12 @@ class ImportModal extends Component
         $this->selectedRows = [];
     }
 
+    public function openForPanel($panel)
+    {
+        $this->panel = $panel;
+        $this->open();
+    }
+
     public function confirm()
     {
         $toImport = collect($this->rows)->filter(fn($r, $i) => in_array($i, $this->selectedRows))->values()->toArray();
@@ -87,7 +93,7 @@ class ImportModal extends Component
             return;
         }
 
-        $this->dispatch('importData', rows: $toImport);
+        $this->dispatch('importData', rows: $toImport, panel: $this->panel);
         $this->dispatch('notify', message: count($toImport) . ' registro(s) enviados para importar.', type: 'success');
         $this->close();
     }
@@ -161,6 +167,29 @@ class ImportModal extends Component
             'tardanza' => 'tardanza_min', 'tardanza min' => 'tardanza_min', 'tardanza (min)' => 'tardanza_min',
             'horas' => 'horas_trabajadas', 'horas trabajadas' => 'horas_trabajadas', 'h. trabajadas' => 'horas_trabajadas',
             'etiqueta' => 'etiqueta', 'calificacion' => 'etiqueta',
+
+            // Control Vehículos
+            'chofer' => 'chofer', 'conductor' => 'chofer', 'driver' => 'chofer',
+            'placa' => 'placa', 'patente' => 'placa', 'license plate' => 'placa',
+            'marca' => 'marca', 'brand' => 'marca',
+            'modelo' => 'modelo', 'model' => 'modelo',
+            'clase' => 'clase', 'tipo vehiculo' => 'clase', 'tipo' => 'clase',
+            'hora salida' => 'hora_salida', 'hora_salida' => 'hora_salida', 'h. salida' => 'hora_salida',
+            'hora ingreso' => 'hora_ingreso', 'hora_ingreso' => 'hora_ingreso', 'h. ingreso' => 'hora_ingreso',
+            'km salida' => 'km_salida', 'km_salida' => 'km_salida', 'kms salida' => 'km_salida',
+            'km ingreso' => 'km_ingreso', 'km_ingreso' => 'km_ingreso', 'kms ingreso' => 'km_ingreso',
+            'observacion' => 'observacion', 'observaciones' => 'observacion', 'obs' => 'observacion',
+
+            // Combustibles
+            'categoria' => 'categoria', 'cat' => 'categoria', 'category' => 'categoria',
+            'anio' => 'anio', 'año' => 'anio', 'year' => 'anio',
+            'color' => 'color', 'colour' => 'color',
+            'kilometraje' => 'kilometraje', 'km' => 'kilometraje', 'kms' => 'kilometraje', 'odometro' => 'kilometraje',
+            'combustible' => 'combustible', 'tipo combustible' => 'combustible', 'fuel' => 'combustible',
+            'galones' => 'galones', 'galon' => 'galones', 'gallons' => 'galones',
+            'precio galon' => 'precio_galon', 'precio_galon' => 'precio_galon', 'precio x galon' => 'precio_galon',
+            'precio' => 'precio_galon', 'price' => 'precio_galon',
+            'total' => 'total', 'importe' => 'total', 'amount' => 'total',
         ];
         return array_map(fn($h) => $map[$h] ?? $h, $headers);
     }
@@ -172,6 +201,8 @@ class ImportModal extends Component
             'personal' => $this->validatePersonal($row),
             'asistencia' => $this->validateAsistencia($row),
             'cumpleanos' => $this->validateCumpleano($row),
+            'control_vehiculos' => $this->validateControlVehiculo($row),
+            'combustibles' => $this->validateCombustible($row),
             default => ['valid' => false, 'errors' => ['Panel desconocido'], 'data' => $row],
         };
     }
@@ -304,6 +335,79 @@ class ImportModal extends Component
                 'fecha' => $data['fecha'] ?? '—',
                 'nombre' => $data['nombre'] ?? '—',
                 'detalles' => Str::limit($data['detalles'] ?? '', 40),
+            ],
+        ];
+    }
+
+    private function validateControlVehiculo(array $row): array
+    {
+        $errors = [];
+        $data = [];
+
+        if (empty($row['fecha'])) $errors[] = 'Fecha requerida';
+        else $data['fecha'] = $row['fecha'];
+
+        if (empty($row['chofer'])) $errors[] = 'Chofer requerido';
+        else $data['chofer'] = $row['chofer'];
+
+        $data['placa'] = $row['placa'] ?? '';
+        $data['marca'] = $row['marca'] ?? '';
+        $data['modelo'] = $row['modelo'] ?? '';
+        $data['clase'] = $row['clase'] ?? $row['tipo'] ?? '';
+        $data['hora_salida'] = $row['hora_salida'] ?? '';
+        $data['hora_ingreso'] = $row['hora_ingreso'] ?? '';
+        $data['km_salida'] = $row['km_salida'] ?? '';
+        $data['km_ingreso'] = $row['km_ingreso'] ?? '';
+        $data['observacion'] = $row['observacion'] ?? '';
+
+        return [
+            'valid' => empty($errors),
+            'errors' => $errors,
+            'data' => $data,
+            'preview' => [
+                'fecha' => $data['fecha'] ?? '—',
+                'chofer' => $data['chofer'] ?? '—',
+                'placa' => $data['placa'] ?: '—',
+                'marca' => $data['marca'] ?: '—',
+            ],
+        ];
+    }
+
+    private function validateCombustible(array $row): array
+    {
+        $errors = [];
+        $data = [];
+
+        if (empty($row['fecha'])) $errors[] = 'Fecha requerida';
+        else $data['fecha'] = $row['fecha'];
+
+        if (empty($row['combustible'])) $errors[] = 'Tipo de combustible requerido';
+        else $data['combustible'] = $row['combustible'];
+
+        if (empty($row['galones'])) $errors[] = 'Galones requerido';
+        else $data['galones'] = $row['galones'];
+
+        $data['categoria'] = $row['categoria'] ?? '';
+        $data['clase'] = $row['clase'] ?? '';
+        $data['marca'] = $row['marca'] ?? '';
+        $data['placa'] = $row['placa'] ?? '';
+        $data['modelo'] = $row['modelo'] ?? '';
+        $data['anio'] = $row['anio'] ?? '';
+        $data['color'] = $row['color'] ?? '';
+        $data['conductor'] = $row['conductor'] ?? $row['chofer'] ?? '';
+        $data['kilometraje'] = $row['kilometraje'] ?? $row['km'] ?? '';
+        $data['precio_galon'] = $row['precio_galon'] ?? 0;
+        $data['total'] = $row['total'] ?? 0;
+
+        return [
+            'valid' => empty($errors),
+            'errors' => $errors,
+            'data' => $data,
+            'preview' => [
+                'fecha' => $data['fecha'] ?? '—',
+                'combustible' => $data['combustible'] ?? '—',
+                'placa' => $data['placa'] ?: '—',
+                'galones' => $data['galones'] ?: '—',
             ],
         ];
     }

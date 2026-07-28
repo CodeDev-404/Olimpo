@@ -2,19 +2,20 @@
 
 namespace App\Livewire\Olimpo;
 
+
 use Livewire\Component;
+use Livewire\Attributes\Computed;
 use App\Models\Cumpleano;
 use Carbon\Carbon;
 
 class Cumpleanos extends Component
 {
-    public $cumpleanos = [];
     public $cumpleanosHoy = [];
-    public $selectedId = null;
-    public $selectedIds = [];
-    public $selectMode = false;
     public $showForm = false;
     public $editId = null;
+    public $selectMode = false;
+    public $selectedIds = [];
+    public $selectedId = null;
 
     public $fecha = '';
     public $nombre = '';
@@ -30,79 +31,130 @@ class Cumpleanos extends Component
         'kmente' => 'Premium',
     ];
 
-    protected $listeners = ['panelChanged' => 'refreshData', 'importData' => 'handleImport'];
+    protected $listeners = ['importData' => 'handleImport'];
+
+    #[Computed]
+    public function getCumpleanosProperty()
+    {
+        return cache()->remember('cumpleanos_list', 3600, function () {
+            $today = now()->format('d/m');
+            $todayMonth = (int) now()->format('m');
+            $todayDay = (int) now()->format('d');
+            $todayMd = ($todayMonth * 100) + $todayDay;
+
+            $aliases = [];
+            $dnis = Cumpleano::whereNotNull('dni')->pluck('dni');
+            if ($dnis->isNotEmpty()) {
+                $aliases = \App\Models\Personal::whereIn('documento', $dnis->toArray())
+                    ->pluck('alias', 'documento')
+                    ->toArray();
+            }
+
+            $all = Cumpleano::all()->map(function ($c) use ($today, $todayMd, $todayMonth, $todayDay, $aliases) {
+                $dayOfWeek = $this->dayOfWeekForYear($c->fecha);
+                $fechaLarga = $this->fechaLarga($c->fecha);
+                $proximidad = $this->proximidad($c->fecha, $todayMonth, $todayDay);
+                $alias = $c->dni ? ($aliases[$c->dni] ?? null) : null;
+
+                return [
+                    'id' => $c->id,
+                    'dni' => $c->dni,
+                    'alias' => t($alias),
+                    'fecha' => $c->fecha,
+                    'fecha_larga' => $fechaLarga,
+                    'nombre' => t($c->nombre),
+                    'detalles' => t($c->detalles),
+                    'parentesco' => t($c->parentesco ?? ''),
+                    'recordatorio_activo' => (bool) $c->recordatorio_activo,
+                    'recordatorio_hora' => substr($c->recordatorio_hora ?? '07:30:00', 0, 5),
+                    'dia' => t($dayOfWeek),
+                    'proximidad' => $proximidad,
+                    'es_hoy' => $c->fecha === $today,
+                    'es_personal' => false,
+                ];
+            })->toArray();
+
+            $existingDnis = collect($all)->pluck('dni')->filter()->values()->toArray();
+
+            $personal = \App\Models\Personal::whereNotNull('fecha_nacimiento')
+                ->get(['id', 'nombre', 'alias', 'documento', 'fecha_nacimiento'])
+                ->reject(fn($p) => $p->documento && in_array($p->documento, $existingDnis))
+                ->map(function ($p) use ($today, $todayMd, $todayMonth, $todayDay) {
+                    $fn = Carbon::parse($p->fecha_nacimiento);
+                    $ddmm = $fn->format('d/m');
+                    $fechaLarga = $fn->format('d') . ' de ' . ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'][(int)$fn->format('m') - 1];
+                    $dia = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'][$fn->dayOfWeek];
+
+                    $md = ((int)$fn->format('m') * 100) + (int)$fn->format('d');
+                    $proximidad = $md >= $todayMd ? $md - $todayMd : (1231 - $todayMd) + $md;
+
+                    return [
+                        'id' => 'p_' . $p->id,
+                        'alias' => t($p->alias),
+                        'nombre' => t($p->nombre),
+                        'fecha' => $ddmm,
+                        'fecha_larga' => $fechaLarga,
+                        'dia' => t($dia),
+                        'proximidad' => $proximidad,
+                        'es_hoy' => $ddmm === $today,
+                        'es_personal' => true,
+                        'parentesco' => '',
+                        'detalles' => '',
+                        'recordatorio_activo' => false,
+                        'recordatorio_hora' => '',
+                    ];
+                })
+                ->toArray();
+
+            $merged = array_merge($all, $personal);
+            usort($merged, fn($a, $b) => $a['proximidad'] <=> $b['proximidad']);
+
+            return $merged;
+        });
+    }
 
     public function mount()
     {
-        $this->refreshData();
+        $this->refreshCumpleanosHoy();
     }
 
-    public function refreshData()
+    public function refreshCumpleanosHoy()
     {
-        $today = now()->format('d/m');
-        $todayMonth = (int) now()->format('m');
-        $todayDay = (int) now()->format('d');
-        $todayMd = ($todayMonth * 100) + $todayDay;
+        $all = $this->cumpleanos;
+        $this->cumpleanosHoy = array_values(array_filter($all, fn($c) => $c['es_hoy']));
+    }
 
-        $all = Cumpleano::all()->map(function ($c) use ($today, $todayMd, $todayMonth, $todayDay) {
-            $dayOfWeek = $this->dayOfWeekForYear($c->fecha);
-            $fechaLarga = $this->fechaLarga($c->fecha);
-            $proximidad = $this->proximidad($c->fecha, $todayMonth, $todayDay);
+    public function selectCumpleano($id)
+    {
+        $this->selectedId = $id;
+    }
 
-            return [
-                'id' => $c->id,
-                'dni' => $c->dni,
-                'fecha' => $c->fecha,
-                'fecha_larga' => $fechaLarga,
-                'nombre' => $c->nombre,
-                'detalles' => $c->detalles,
-                'parentesco' => $c->parentesco ?? '',
-                'recordatorio_activo' => (bool) $c->recordatorio_activo,
-                'recordatorio_hora' => substr($c->recordatorio_hora ?? '07:30:00', 0, 5),
-                'dia' => $dayOfWeek,
-                'proximidad' => $proximidad,
-                'es_hoy' => $c->fecha === $today,
-                'es_personal' => false,
-            ];
-        })->toArray();
+    public function toggleSelectMode()
+    {
+        $this->selectMode = !$this->selectMode;
+        if (!$this->selectMode) $this->selectedIds = [];
+    }
 
-        // Personal birthdays merged into the same list
-        $existingDnis = collect($all)->pluck('dni')->filter()->values()->toArray();
+    public function toggleSelect($id)
+    {
+        $key = array_search($id, $this->selectedIds);
+        if ($key !== false) {
+            unset($this->selectedIds[$key]);
+        } else {
+            $this->selectedIds[] = $id;
+        }
+    }
 
-        $personal = \App\Models\Personal::whereNotNull('fecha_nacimiento')
-            ->get()
-            ->reject(fn($p) => $p->documento && in_array($p->documento, $existingDnis))
-            ->map(function ($p) use ($today, $todayMd, $todayMonth, $todayDay) {
-                $fn = Carbon::parse($p->fecha_nacimiento);
-                $ddmm = $fn->format('d/m');
-                $fechaLarga = $fn->format('d') . ' de ' . ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'][(int)$fn->format('m') - 1];
-                $dia = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'][$fn->dayOfWeek];
-
-                $md = ((int)$fn->format('m') * 100) + (int)$fn->format('d');
-                $proximidad = $md >= $todayMd ? $md - $todayMd : (1231 - $todayMd) + $md;
-
-                return [
-                    'id' => 'p_' . $p->id,
-                    'nombre' => $p->nombre,
-                    'fecha' => $ddmm,
-                    'fecha_larga' => $fechaLarga,
-                    'dia' => $dia,
-                    'proximidad' => $proximidad,
-                    'es_hoy' => $ddmm === $today,
-                    'es_personal' => true,
-                    'parentesco' => '',
-                    'detalles' => '',
-                    'recordatorio_activo' => false,
-                    'recordatorio_hora' => '',
-                ];
-            })
-            ->toArray();
-
-        $merged = array_merge($all, $personal);
-        usort($merged, fn($a, $b) => $a['proximidad'] <=> $b['proximidad']);
-
-        $this->cumpleanos = $merged;
-        $this->cumpleanosHoy = array_values(array_filter($merged, fn($c) => $c['es_hoy']));
+    public function toggleSelectAll()
+    {
+        $ids = array_map(fn($c) => $c['id'] ?? null, $this->cumpleanos);
+        $ids = array_values(array_filter($ids));
+        $allSelected = !array_diff($ids, $this->selectedIds);
+        if ($allSelected) {
+            $this->selectedIds = array_diff($this->selectedIds, $ids);
+        } else {
+            $this->selectedIds = array_merge($this->selectedIds, $ids);
+        }
     }
 
     private function proximidad(string $ddmm, int $currMonth, int $currDay): int
@@ -116,7 +168,6 @@ class Cumpleanos extends Component
         if ($md >= $todayMd) {
             return $md - $todayMd;
         }
-        // Wrap around to next year
         return (1231 - $todayMd) + $md;
     }
 
@@ -140,30 +191,6 @@ class Cumpleanos extends Component
         return $date->day . ' de ' . $meses[(int)$m - 1];
     }
 
-    public function selectCumpleano($id)
-    {
-        $this->selectedId = $id;
-    }
-
-    public function toggleSelect($id)
-    {
-        $key = array_search($id, $this->selectedIds);
-        if ($key !== false) {
-            unset($this->selectedIds[$key]);
-        } else {
-            $this->selectedIds[] = $id;
-        }
-    }
-
-    public function toggleSelectAll()
-    {
-        if (count($this->selectedIds) === count($this->cumpleanos)) {
-            $this->selectedIds = [];
-        } else {
-            $this->selectedIds = collect($this->cumpleanos)->pluck('id')->toArray();
-        }
-    }
-
     public function nuevo()
     {
         $this->resetForm();
@@ -171,27 +198,22 @@ class Cumpleanos extends Component
         $this->editId = null;
     }
 
-    public function editar()
+    public function editar($id = null)
     {
-        if (!$this->selectedId) {
+        $id ??= $this->selectedId;
+        if (!$id) {
             $this->dispatch('notify', message: 'Selecciona un cumpleaños primero.', type: 'warning');
             return;
         }
-        if (is_string($this->selectedId)) {
+        if (is_string($id)) {
             $this->dispatch('notify', message: 'No puedes editar un cumpleaños del personal.', type: 'warning');
             return;
         }
-        $c = Cumpleano::find($this->selectedId);
+        $c = Cumpleano::find($id);
         if (!$c) return;
         $this->fillForm($c);
         $this->showForm = true;
         $this->editId = $c->id;
-    }
-
-    public function toggleSelectMode()
-    {
-        $this->selectMode = !$this->selectMode;
-        if (!$this->selectMode) $this->selectedIds = [];
     }
 
     public function consultarDni()
@@ -216,22 +238,23 @@ class Cumpleanos extends Component
         }
     }
 
-    public function eliminar()
+    public function eliminar($id = null)
     {
         abort_unless(auth()->user()?->role === 'admin', 403);
-        if (!$this->selectedId) {
+        $id ??= $this->selectedId;
+        if (!$id) {
             $this->dispatch('notify', message: 'Selecciona un cumpleaños primero.', type: 'warning');
             return;
         }
-        if (is_string($this->selectedId)) {
+        if (is_string($id)) {
             $this->dispatch('notify', message: 'No puedes eliminar un cumpleaños del personal.', type: 'warning');
             return;
         }
-        $c = Cumpleano::find($this->selectedId);
+        $c = Cumpleano::find($id);
         if ($c) {
             $c->delete();
-            $this->selectedId = null;
-            $this->refreshData();
+            cache()->forget('cumpleanos_list');
+            $this->refreshCumpleanosHoy();
             $this->dispatch('notify', message: 'Cumpleaños eliminado.', type: 'success');
         }
     }
@@ -246,8 +269,8 @@ class Cumpleanos extends Component
         }
         $count = Cumpleano::whereIn('id', $ids)->delete();
         $this->selectedIds = [];
-        $this->selectedId = null;
-        $this->refreshData();
+        cache()->forget('cumpleanos_list');
+        $this->refreshCumpleanosHoy();
         $this->dispatch('notify', message: $count . ' cumpleaño(s) eliminado(s).', type: 'success');
     }
 
@@ -289,8 +312,9 @@ class Cumpleanos extends Component
         }
 
         $this->showForm = false;
-        $this->selectedId = null;
-        $this->refreshData();
+        $this->dispatch('close-form-modal');
+        cache()->forget('cumpleanos_list');
+        $this->refreshCumpleanosHoy();
     }
 
     public function cancel()
@@ -298,7 +322,7 @@ class Cumpleanos extends Component
         $this->showForm = false;
     }
 
-    public function handleImport($rows)
+    public function handleImport($rows, $panel = null)
     {
         $result = \App\Imports\CumpleanosImport::insert($rows ?? []);
         $msg = $result['inserted'] . ' registro(s) importados correctamente.';
@@ -306,7 +330,8 @@ class Cumpleanos extends Component
             $msg .= ' Errores: ' . implode(' | ', $result['errors']);
         }
         $this->dispatch('notify', message: $msg, type: empty($result['errors']) ? 'success' : 'warning');
-        $this->refreshData();
+        cache()->forget('cumpleanos_list');
+        $this->refreshCumpleanosHoy();
     }
 
     private function resetForm()

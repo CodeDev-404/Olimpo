@@ -3,6 +3,7 @@
 namespace App\Livewire\Olimpo;
 
 use Livewire\Component;
+use Livewire\Attributes\Computed;
 use App\Models\Personal;
 use App\Models\Asistencia as AsistenciaModel;
 use Illuminate\Support\Facades\DB;
@@ -12,8 +13,6 @@ class Asistencia extends Component
     public $mes;
     public $anio;
     public $dias = 31;
-    public $personal = [];
-    public $gridData = [];
     public $filterMes;
     public $nameColumnWidth = 150;
     public $editing = null;
@@ -33,7 +32,7 @@ class Asistencia extends Component
     public $configLimBueno = 5;
     public $configLimRegular = 20;
 
-    protected $listeners = ['panelChanged' => 'loadGrid', 'importData' => 'handleImport'];
+    protected $listeners = ['importData' => 'handleImport'];
 
     public function updatedFilterMes($value)
     {
@@ -60,6 +59,20 @@ class Asistencia extends Component
             default => 31,
         };
 
+        $this->nameColumnWidth = max(120, collect($this->personal)->reduce(fn($c, $p) => max($c, mb_strlen($p['nombre']) * 8 + 32), 120));
+
+        $config = DB::table('configuracion')->get()->keyBy('clave');
+        $this->configHoraEntradaDia = $config['hora_entrada_dia']->valor ?? '08:00';
+        $this->configHoraSalidaDia = $config['hora_salida_dia']->valor ?? '17:00';
+        $this->configHoraEntradaNoche = $config['hora_entrada_noche']->valor ?? '19:00';
+        $this->configHoraSalidaNoche = $config['hora_salida_noche']->valor ?? '07:00';
+        $this->configLimBueno = (int)($config['limite_bueno_min']->valor ?? 5);
+        $this->configLimRegular = (int)($config['limite_regular_min']->valor ?? 20);
+    }
+
+    #[Computed]
+    public function getPersonalProperty()
+    {
         $deptos = [
             'PRINCIPAL' => 1, 'COMISIONES' => 2,
             'COORDINADOR' => 3, 'SEGURIDAD' => 4,
@@ -69,21 +82,24 @@ class Asistencia extends Component
 
         $grupoPri = ['CHOFERES' => 1, 'OLIMPO' => 2, 'COCINA' => 3, 'MANTENIMIENTO' => 4, 'TORREÓN' => 5];
 
-        $this->personal = Personal::activos()
-            ->with('cargoRel')
+        $personal = Personal::activos()
+            ->with('cargoRel:id,nombre,grupo,orden')
+            ->select(['id', 'nombre', 'alias', 'departamento'])
             ->get()
             ->toArray();
 
-        foreach ($this->personal as &$p) {
+        foreach ($personal as &$p) {
+            $p['nombre'] = t($p['nombre']);
             $dep = $p['departamento'] ?? '';
             $p['grupo_rol'] = in_array($dep, ['TORREON', 'TORREON SUPLENTE'])
                 ? 'TORREÓN'
                 : ($p['cargo_rel']['grupo'] ?? 'OLIMPO');
             $p['orden_rol'] = $p['cargo_rel']['orden'] ?? 0;
+            unset($p['cargo_rel'], $p['created_at'], $p['updated_at']);
         }
         unset($p);
 
-        usort($this->personal, function ($a, $b) use ($deptos, $grupoPri) {
+        usort($personal, function ($a, $b) use ($deptos, $grupoPri) {
             $rolA = $grupoPri[$a['grupo_rol']] ?? 99;
             $rolB = $grupoPri[$b['grupo_rol']] ?? 99;
             if ($rolA !== $rolB) return $rolA <=> $rolB;
@@ -99,29 +115,24 @@ class Asistencia extends Component
             return strcasecmp($a['nombre'], $b['nombre']);
         });
 
-        $this->personal = array_values($this->personal);
+        return array_values($personal);
+    }
 
-        $this->nameColumnWidth = max(120, collect($this->personal)->reduce(fn($c, $p) => max($c, mb_strlen($p['nombre']) * 8 + 32), 120));
-
-        $config = DB::table('configuracion')->get()->keyBy('clave');
-        $this->configHoraEntradaDia = $config['hora_entrada_dia']->valor ?? '08:00';
-        $this->configHoraSalidaDia = $config['hora_salida_dia']->valor ?? '17:00';
-        $this->configHoraEntradaNoche = $config['hora_entrada_noche']->valor ?? '19:00';
-        $this->configHoraSalidaNoche = $config['hora_salida_noche']->valor ?? '07:00';
-        $this->configLimBueno = (int)($config['limite_bueno_min']->valor ?? 5);
-        $this->configLimRegular = (int)($config['limite_regular_min']->valor ?? 20);
-
+    #[Computed]
+    public function getGridDataProperty()
+    {
         $raw = \DB::select(
-            "SELECT * FROM asistencia WHERE SUBSTR(fecha, 4, 2) = ? AND SUBSTR(fecha, 7, 4) = ? ORDER BY persona_nombre, fecha",
+            "SELECT id, persona_id, persona_nombre, fecha, hora_entrada, hora_salida, turno, tardanza_min, horas_trabajadas, etiqueta FROM asistencia WHERE SUBSTR(fecha, 4, 2) = ? AND SUBSTR(fecha, 7, 4) = ? ORDER BY persona_nombre, fecha",
             [$this->mes, (string)$this->anio]
         );
         $rows = json_decode(json_encode($raw), true);
 
-        $this->gridData = [];
+        $gridData = [];
         foreach ($rows as $r) {
             $key = $r['persona_id'] . '_' . $r['fecha'];
-            $this->gridData[$key] = $r;
+            $gridData[$key] = $r;
         }
+        return $gridData;
     }
 
     public function editCell($personaId, $dia, $fecha)

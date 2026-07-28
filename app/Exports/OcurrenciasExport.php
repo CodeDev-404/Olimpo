@@ -7,7 +7,6 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
-use PhpOffice\PhpSpreadsheet\Style\Color;
 
 class OcurrenciasExport implements FromArray, WithHeadings, WithStyles
 {
@@ -18,44 +17,53 @@ class OcurrenciasExport implements FromArray, WithHeadings, WithStyles
         $this->rows = $rows;
     }
 
+    public static function columnMap(): array
+    {
+        return [
+            'fecha' => 'FECHA',
+            'hora_ingreso' => 'H. INGRESO',
+            'hora_salida' => 'H. SALIDA',
+            'persona_nombre' => 'NOMBRE',
+            'vehiculo' => 'VEHÍCULO',
+            'destino' => 'DESTINO',
+            'motivo' => 'MOTIVO',
+            'detalles' => 'DETALLES',
+            'observacion' => 'OBSERVACIÓN',
+            'persona_cargo' => 'CARGO',
+            'tipo' => 'TIPO',
+            'otro' => 'OTRO',
+            'turno' => 'TURNO',
+        ];
+    }
+
     public function array(): array
     {
-        $data = [];
-        foreach ($this->rows as $oc) {
-            $data[] = [
-                $oc['fecha'],
-                $oc['hora_ingreso'],
-                $oc['hora_salida'],
-                $oc['persona_nombre'],
-                $oc['detalles'],
-                $oc['observacion'],
-                $oc['persona_cargo'] ?? '',
-                $oc['tipo'],
-                $oc['otro'] ?? '',
-            ];
-        }
-        return $data;
+        $cols = array_keys(static::columnMap());
+        return array_map(fn($row) => array_map(fn($c) => $row[$c] ?? '', $cols), $this->rows);
     }
 
     public function headings(): array
     {
-        return ['FECHA', 'H. INGRESO', 'H. SALIDA', 'NOMBRE', 'DETALLES', 'OBSERVACIÓN', 'CARGO', 'TIPO', 'OTRO'];
+        return array_values(static::columnMap());
     }
 
     public function styles(Worksheet $sheet)
     {
-        $sheet->getStyle('A1:I1')->applyFromArray([
+        $lastCol = chr(64 + count(static::columnMap()));
+        $lastRow = count($this->rows) + 1;
+
+        $sheet->getStyle("A1:{$lastCol}1")->applyFromArray([
             'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '1C1C2E']],
             'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 10],
         ]);
 
-        $sheet->getStyle('A2:I' . (count($this->rows) + 1))->applyFromArray([
+        $sheet->getStyle("A2:{$lastCol}{$lastRow}")->applyFromArray([
             'borders' => [
                 'allBorders' => ['borderStyle' => 'thin', 'color' => ['rgb' => 'CCCCCC']],
             ],
         ]);
 
-        foreach (range('A', 'I') as $col) {
+        foreach (range('A', $lastCol) as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 

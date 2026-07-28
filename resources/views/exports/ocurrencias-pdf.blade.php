@@ -9,9 +9,10 @@
         .info { color: #888; font-size: 9px; margin-bottom: 10px; }
         table { width: 100%; border-collapse: collapse; }
         th { background: #1C1C2E; color: white; padding: 6px; font-size: 8px; text-align: center; }
-        td { padding: 4px 6px; border: 1px solid #DDD; font-size: 8px; }
+        td { padding: 4px 6px; border: 1px solid #DDD; font-size: 8px; text-align: center; }
         tr:nth-child(even) { background: #F5F5F5; }
-        .tipo-cell { font-weight: bold; text-align: center; }
+        .left { text-align: left; }
+        .bold { font-weight: bold; }
     </style>
 </head>
 <body>
@@ -21,30 +22,29 @@
             <thead>
                 <tr>
                     <th>#</th>
-                    <th>FECHA</th>
-                    <th>H. INGRESO</th>
-                    <th>H. SALIDA</th>
-                    <th>NOMBRE</th>
-                    <th>DETALLES</th>
-                    <th>OBSERVACIÓN</th>
-                    <th>CARGO</th>
-                    <th>TIPO</th>
-                    <th>OTRO</th>
+                    @foreach($columns as $label)
+                        <th>{{ $label }}</th>
+                    @endforeach
                 </tr>
             </thead>
             <tbody>
                 @foreach($rows as $i => $oc)
                     <tr>
-                        <td style="text-align:center">{{ $i + 1 }}</td>
-                        <td style="text-align:center">{{ $oc['fecha'] }}</td>
-                        <td style="text-align:center">{{ $oc['hora_ingreso'] }}</td>
-                        <td style="text-align:center">{{ $oc['hora_salida'] }}</td>
-                        <td>{{ $oc['persona_nombre'] }}</td>
-                        <td>{{ Str::limit($oc['detalles'] ?? '', 80) }}</td>
-                        <td>{{ Str::limit($oc['observacion'] ?? '', 60) }}</td>
-                        <td style="text-align:center">{{ $oc['persona_cargo'] ?? '—' }}</td>
-                        <td class="tipo-cell">{{ $oc['tipo'] }}</td>
-                        <td style="text-align:center">{{ $oc['otro'] ?? '' }}</td>
+                        <td>{{ $i + 1 }}</td>
+                        @foreach($columns as $key => $label)
+                            @php
+                                $val = $oc[$key] ?? '';
+                                $isLeft = in_array($key, ['persona_nombre', 'detalles', 'observacion']);
+                                $isBold = $key === 'tipo';
+                            @endphp
+                            <td class="{{ $isLeft ? 'left' : '' }} {{ $isBold ? 'bold' : '' }}">
+                                @if(in_array($key, ['detalles', 'observacion']))
+                                    {{ Str::limit($val, $key === 'detalles' ? 80 : 60) ?: '—' }}
+                                @else
+                                    {{ $val ?: '—' }}
+                                @endif
+                            </td>
+                        @endforeach
                     </tr>
                 @endforeach
             </tbody>

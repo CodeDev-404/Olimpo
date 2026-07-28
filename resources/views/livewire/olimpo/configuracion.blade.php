@@ -1,11 +1,11 @@
 <div>
     @if(!$isAuth)
-        <div class="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg mb-5 text-sm">
+        <div class="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg mb-5 text-sm dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-300">
             <span class="font-semibold">Bloqueado</span> — Solo administradores pueden modificar la configuración.
         </div>
     @endif
 
-    <div class="flex flex-wrap gap-1 mb-5 bg-ink-100 p-1 rounded-lg">
+    <div class="flex flex-wrap gap-1 mb-5 bg-[#f4f6f9] dark:bg-white/[0.06] p-1 rounded-lg">
         @foreach([
             ['key' => 'tipos', 'label' => 'Tipos'],
             ['key' => 'cargos', 'label' => 'Cargos'],
@@ -15,7 +15,7 @@
         ] as $tab)
             <button wire:click="setTab('{{ $tab['key'] }}')"
                 class="px-4 py-2 rounded-md text-sm font-medium transition-colors
-                {{ $activeTab === $tab['key'] ? 'bg-white text-ink-800 shadow-sm' : 'text-ink-500 hover:text-ink-700 hover:bg-white/50' }}">
+                {{ $activeTab === $tab['key'] ? 'bg-white text-ink-800 shadow-sm dark:bg-[#1C1F2E] dark:text-white' : 'text-ink-500 hover:text-ink-700 hover:bg-white/50 dark:text-white/60 dark:hover:text-white/80 dark:hover:bg-white/[0.06]' }}">
                 {{ $tab['label'] }}
             </button>
         @endforeach
@@ -28,7 +28,7 @@
                     <button wire:click="newTipo" class="btn btn-primary mb-4">+ Nuevo Tipo</button>
                 @endif
                 @if($showTipoForm)
-                    <div class="bg-ink-50 border border-ink-200 p-4 rounded-lg mb-4">
+                    <div class="bg-[#f4f6f9] dark:bg-white/[0.04] border border-[#e5eaef] dark:border-white/[0.06] p-4 rounded-lg mb-4">
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-[11px] text-ink-500 font-semibold uppercase tracking-wider mb-1">Nombre</label>
@@ -45,12 +45,12 @@
                             </div>
                             <div>
                                 <label class="block text-[11px] text-ink-500 font-semibold uppercase tracking-wider mb-1">Color</label>
-                                <input type="color" wire:model="tipoColor" class="h-10 w-full rounded-lg cursor-pointer border border-ink-200">
+                                <input type="color" wire:model="tipoColor" class="h-10 w-full rounded-lg cursor-pointer border border-[#e5eaef] dark:border-white/[0.06] dark:bg-white/[0.06]">
                             </div>
                             <div class="flex items-end pb-2">
                                 <label class="flex items-center gap-2 cursor-pointer">
-                                    <input type="checkbox" wire:model="tipoActivo" class="rounded border-ink-300 text-ink-800">
-                                    <span class="text-sm text-ink-700">Activo</span>
+                                    <input type="checkbox" wire:model="tipoActivo" class="rounded border-[#e5eaef] text-ink-800 dark:border-white/[0.06] dark:text-white dark:bg-white/[0.06]">
+                                    <span class="text-sm text-ink-700 dark:text-ink-300">Activo</span>
                                 </label>
                             </div>
                         </div>
@@ -62,7 +62,7 @@
                 @endif
                 <div class="space-y-2">
                     @foreach($tipos as $t)
-                        <div class="flex items-center justify-between bg-ink-50 border border-ink-100 p-3 rounded-lg">
+                        <div class="flex items-center justify-between bg-[#f4f6f9] dark:bg-white/[0.04] border border-[#e5eaef] dark:border-white/[0.06] p-3 rounded-lg">
                             <div class="flex items-center gap-3">
                                 <span class="w-4 h-4 rounded" style="background: {{ $t['color'] }}"></span>
                                 <span class="font-medium text-ink-900">{{ $t['nombre'] }}</span>
@@ -91,7 +91,7 @@
                     <button wire:click="newCargo" class="btn btn-primary mb-4">+ Nuevo Cargo</button>
                 @endif
                 @if($showCargoForm)
-                    <div class="bg-ink-50 border border-ink-200 p-4 rounded-lg mb-4 flex gap-2 items-start">
+                    <div class="bg-[#f4f6f9] dark:bg-white/[0.04] border border-[#e5eaef] dark:border-white/[0.06] p-4 rounded-lg mb-4 flex gap-2 items-start dark:border-ink-600">
                         <div class="flex-1 space-y-2">
                             <input type="text" wire:model="cargoNombre" class="input-field w-full" placeholder="Nombre del cargo">
                             <div class="flex gap-2">
@@ -112,10 +112,10 @@
                 @endif
                 <div class="space-y-2">
                     @foreach($cargos as $c)
-                        <div class="flex items-center justify-between bg-ink-50 border border-ink-100 p-3 rounded-lg">
+                        <div class="flex items-center justify-between bg-[#f4f6f9] dark:bg-white/[0.04] border border-[#e5eaef] dark:border-white/[0.06] p-3 rounded-lg">
                             <div class="flex items-center gap-3">
                                 <span class="text-ink-900">{{ $c['nombre'] }}</span>
-                                <span class="badge {{ $c['grupo'] === 'CHOFERES' ? 'bg-blue-100 text-blue-700' : ($c['grupo'] === 'COCINA' ? 'bg-amber-100 text-amber-700' : ($c['grupo'] === 'MANTENIMIENTO' ? 'bg-green-100 text-green-700' : 'bg-ink-100 text-ink-600')) }}">
+                                <span class="badge {{ $c['grupo'] === 'CHOFERES' ? 'bg-blue-100 text-blue-700' : ($c['grupo'] === 'COCINA' ? 'bg-amber-100 text-amber-700' : ($c['grupo'] === 'MANTENIMIENTO' ? 'bg-green-100 text-green-700' : 'bg-[#f4f6f9] dark:bg-white/[0.06] text-ink-600 dark:text-white/60')) }}">
                                     {{ $c['grupo'] ?? 'OLIMPO' }}
                                 </span>
                                 @if($c['orden'] > 0)
@@ -142,7 +142,7 @@
                     <button wire:click="newCamioneta" class="btn btn-primary mb-4">+ Nueva Camioneta</button>
                 @endif
                 @if($showCamForm)
-                    <div class="bg-ink-50 border border-ink-200 p-4 rounded-lg mb-4">
+                    <div class="bg-[#f4f6f9] dark:bg-white/[0.04] border border-[#e5eaef] dark:border-white/[0.06] p-4 rounded-lg mb-4">
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-[11px] text-ink-500 font-semibold uppercase tracking-wider mb-1">Placa *</label>
@@ -173,7 +173,7 @@
                 @endif
                 <div class="space-y-2">
                     @foreach($camionetas as $c)
-                        <div class="flex items-center justify-between bg-ink-50 border border-ink-100 p-3 rounded-lg">
+                        <div class="flex items-center justify-between bg-[#f4f6f9] dark:bg-white/[0.04] border border-[#e5eaef] dark:border-white/[0.06] p-3 rounded-lg">
                             <div class="flex items-center gap-3">
                                 <span class="font-mono font-medium text-ink-900">{{ $c['placa'] }}</span>
                                 <span class="text-sm text-ink-500">{{ $c['marca'] }} {{ $c['modelo'] }} ({{ $c['anio'] }})</span>
@@ -201,7 +201,7 @@
                     <button wire:click="newUser" class="btn btn-primary mb-4">+ Nuevo Usuario</button>
                 @endif
                 @if($showUserForm)
-                    <div class="bg-ink-50 border border-ink-200 p-4 rounded-lg mb-4">
+                    <div class="bg-[#f4f6f9] dark:bg-white/[0.04] border border-[#e5eaef] dark:border-white/[0.06] p-4 rounded-lg mb-4">
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-[11px] text-ink-500 font-semibold uppercase tracking-wider mb-1">Usuario *</label>
@@ -231,11 +231,11 @@
                 @endif
                 <div class="space-y-2">
                     @foreach($usuarios as $u)
-                        <div class="flex items-center justify-between bg-ink-50 border border-ink-100 p-3 rounded-lg">
+                        <div class="flex items-center justify-between bg-[#f4f6f9] dark:bg-white/[0.04] border border-[#e5eaef] dark:border-white/[0.06] p-3 rounded-lg">
                             <div class="flex items-center gap-3">
                                 <span class="font-medium text-ink-900">{{ $u['name'] }}</span>
                                 <span class="text-sm text-ink-400">({{ $u['email'] }})</span>
-                                <span class="badge {{ $u['role'] === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-ink-100 text-ink-600' }}">
+                                <span class="badge {{ $u['role'] === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-[#f4f6f9] dark:bg-white/[0.06] text-ink-600 dark:text-white/60' }}">
                                     {{ $u['role'] === 'admin' ? 'Admin' : 'User' }}
                                 </span>
                             </div>
@@ -292,7 +292,11 @@
                         </div>
                     </div>
                 </div>
-                <button wire:click="saveSettings" class="btn btn-primary mt-6">Guardar Configuración</button>
+                <button wire:click="saveSettings" class="btn btn-primary mt-6" wire:loading.attr="disabled">
+                    <svg wire:loading wire:target="saveSettings" class="w-4 h-4 mr-1.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                    <span wire:loading.remove wire:target="saveSettings">Guardar Configuración</span>
+                    <span wire:loading wire:target="saveSettings">Guardando...</span>
+                </button>
             </div>
         </div>
     @endif

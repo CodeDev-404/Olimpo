@@ -3,212 +3,429 @@
 namespace App\Livewire\Olimpo;
 
 use Livewire\Component;
+use App\Models\Cumpleano;
 use App\Models\Ocurrencia;
+use App\Models\Asistencia;
+use App\Models\ControlVehiculo;
+use App\Models\Combustible;
 use App\Models\Personal;
 use App\Models\TipoOcurrencia;
-use App\Models\Cumpleano;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class Dashboard extends Component
 {
-    public $search = '';
-    public $selectedId = null;
-    public $stats = [];
-    public $ocurrencias = [];
     public $cumpleanos = [];
-
-    public $configHoraEntradaDia = '08:00';
-    public $configHoraSalidaDia = '17:00';
-    public $configHoraEntradaNoche = '19:00';
-    public $configHoraSalidaNoche = '07:00';
-
-    public $showQuickForm = false;
-    public $qf_persona_nombre = '';
-    public $qf_tipo = '';
-    public $qf_otro = '';
-    public $qf_detalles = '';
-    public $qf_observacion = '';
-    public $qf_turno = 'DÍA';
-    public $qf_hora_ingreso = '';
-    public $qf_hora_salida = '';
-
-    protected $listeners = ['panelChanged' => 'refreshData', 'ocurrenciaCreada' => 'refreshData'];
+    public $proximosCumpleanos = [];
+    public $kpis = [];
+    public $ocurrenciasHoy = [];
+    public $ocurrenciasRecientes = [];
+    public $asistenciaHoy = [];
+    public $personalOnline = [];
+    public $notificaciones = [];
+    public $chartTipoData = null;
+    public $chartSemanalData = null;
+    public $calendarioMes = [];
+    public $calendarioEventos = [];
 
     public function mount()
     {
-        $this->loadConfig();
-        $this->refreshData();
-    }
-
-    private function loadConfig()
-    {
-        $config = \DB::table('configuracion')->get()->keyBy('clave');
-        $this->configHoraEntradaDia = $config['hora_entrada_dia']->valor ?? '08:00';
-        $this->configHoraSalidaDia = $config['hora_salida_dia']->valor ?? '17:00';
-        $this->configHoraEntradaNoche = $config['hora_entrada_noche']->valor ?? '19:00';
-        $this->configHoraSalidaNoche = $config['hora_salida_noche']->valor ?? '07:00';
-    }
-
-    private function detectarTurnoActual(): string
-    {
-        $now = now('America/Lima');
-        $actualMin = (int)$now->format('H') * 60 + (int)$now->format('i');
-
-        $diaEnt = explode(':', $this->configHoraEntradaDia);
-        $diaSal = explode(':', $this->configHoraSalidaDia);
-        $diaEntMin = (int)$diaEnt[0] * 60 + (int)($diaEnt[1] ?? 0);
-        $diaSalMin = (int)$diaSal[0] * 60 + (int)($diaSal[1] ?? 0);
-
-        $nocheEnt = explode(':', $this->configHoraEntradaNoche);
-        $nocheSal = explode(':', $this->configHoraSalidaNoche);
-        $nocheEntMin = (int)$nocheEnt[0] * 60 + (int)($nocheEnt[1] ?? 0);
-        $nocheSalMin = (int)$nocheSal[0] * 60 + (int)($nocheSal[1] ?? 0);
-
-        $enRango = function($entMin, $salMin, $actualMin) {
-            if ($salMin < $entMin) {
-                return $actualMin >= $entMin || $actualMin < $salMin;
-            }
-            return $actualMin >= $entMin && $actualMin < $salMin;
-        };
-
-        if ($enRango($diaEntMin, $diaSalMin, $actualMin)) return 'DÍA';
-        if ($enRango($nocheEntMin, $nocheSalMin, $actualMin)) return 'NOCHE';
-
-        return 'DÍA';
-    }
-
-    public function refreshData()
-    {
-        $this->loadStats();
-        $this->loadOcurrencias();
         $this->loadCumpleanos();
-    }
-
-    public function loadStats()
-    {
-        $this->stats = Cache::remember('dashboard_stats', 300, function () {
-            $hoy = now()->format('d/m/Y');
-            $semana = collect(range(0, 6))->map(fn($d) => now()->subDays($d)->format('d/m/Y'));
-            $mes = now()->month;
-            $anio = now()->year;
-
-            return [
-                'hoy' => Ocurrencia::where('fecha', $hoy)->count(),
-                'semana' => Ocurrencia::whereIn('fecha', $semana)->count(),
-                'mes' => Ocurrencia::where('mes', $mes)->where('anio', $anio)->count(),
-                'total' => Ocurrencia::count(),
-            ];
-        });
+        $this->loadKpis();
+        $this->loadOcurrencias();
+        $this->loadAsistenciaHoy();
+        $this->loadPersonalOnline();
+        $this->loadNotificaciones();
+        $this->loadChartData();
+        $this->loadCalendario();
     }
 
     public function loadCumpleanos()
     {
-        $hoy = now()->format('d/m');
-        $this->cumpleanos = Cumpleano::whereRaw("SUBSTR(fecha, 1, 5) = ?", [$hoy])
-            ->orderBy('nombre')
-            ->get()
-            ->toArray();
+        $cacheKey = 'dash_cumpleanos_' . now()->format('Ymd');
+        $data = cache()->remember($cacheKey, 300, function () {
+            $hoy = now()->format('d/m');
+            $cumpleanos = Cumpleano::whereRaw("SUBSTR(fecha, 1, 5) = ?", [$hoy])
+                ->orderBy('nombre')
+                ->get()
+                ->map(fn($c) => [
+                    'id' => $c->id,
+                    'nombre' => t($c->nombre),
+                    'parentesco' => t($c->parentesco ?? ''),
+                    'detalles' => t($c->detalles),
+                    'fecha' => $c->fecha,
+                    'dni' => $c->dni,
+                ])
+                ->toArray();
+
+            $prox = now()->addDay();
+            $proxEnd = now()->addDays(7);
+            $fechas = [];
+            for ($d = $prox; $d <= $proxEnd; $d->addDay()) {
+                $fechas[] = $d->format('d/m');
+            }
+            $proximosCumpleanos = Cumpleano::whereIn(DB::raw("SUBSTR(fecha, 1, 5)"), $fechas)
+                ->orderBy(DB::raw("SUBSTR(fecha, 1, 5)"))
+                ->get()
+                ->map(fn($c) => [
+                    'nombre' => t($c->nombre),
+                    'parentesco' => t($c->parentesco ?? ''),
+                    'fecha' => $c->fecha,
+                ])
+                ->toArray();
+
+            return compact('cumpleanos', 'proximosCumpleanos');
+        });
+
+        $this->cumpleanos = $data['cumpleanos'];
+        $this->proximosCumpleanos = $data['proximosCumpleanos'];
+    }
+
+    public function loadKpis()
+    {
+        $cacheKey = 'dash_kpis_' . now()->format('YmdH');
+        $this->kpis = cache()->remember($cacheKey, 60, function () {
+            $hoy = now()->format('d/m/Y');
+            $mes = now()->month;
+            $anio = now()->year;
+
+            $totalPersonal = Personal::count();
+            $personalActivo = Personal::where('estado', 'ACTIVO')->count();
+            $asistenciaHoy = Asistencia::where('fecha', $hoy)->count();
+
+            return [
+                'personal_activo' => $personalActivo,
+                'personal_total' => $totalPersonal,
+                'personal_pct' => $totalPersonal > 0 ? round($personalActivo / $totalPersonal * 100) : 0,
+                'ocurrencias_hoy' => Ocurrencia::where('fecha', $hoy)->count(),
+                'ocurrencias_mes' => Ocurrencia::where('mes', $mes)->where('anio', $anio)->count(),
+                'vehiculos_uso' => ControlVehiculo::where('fecha', $hoy)->whereNull('hora_ingreso')->count(),
+                'vehiculos_total' => ControlVehiculo::select('placa')->distinct()->count(),
+                'combustible_mes' => Combustible::whereMonth('created_at', $mes)->whereYear('created_at', $anio)->sum('total'),
+                'asistencia_hoy' => $asistenciaHoy,
+                'tardanzas_hoy' => Asistencia::where('fecha', $hoy)->where('tardanza_min', '>', 0)->count(),
+                'ausentes_hoy' => $personalActivo - $asistenciaHoy,
+            ];
+        });
     }
 
     public function loadOcurrencias()
     {
-        $query = Ocurrencia::query()
-            ->leftJoin('personal', 'ocurrencias.persona_id', '=', 'personal.id')
-            ->select('ocurrencias.*', 'personal.cargo as persona_cargo');
-
-        if ($this->search) {
-            $q = $this->search;
-            $query->where(function($qry) use ($q) {
-                $qry->where('ocurrencias.persona_nombre', 'like', "%{$q}%")
-                    ->orWhere('ocurrencias.tipo', 'like', "%{$q}%")
-                    ->orWhere('ocurrencias.detalles', 'like', "%{$q}%")
-                    ->orWhere('ocurrencias.fecha', 'like', "%{$q}%")
-                    ->orWhere('personal.cargo', 'like', "%{$q}%");
-            });
-            $this->ocurrencias = $query->orderBy('ocurrencias.fecha', 'desc')->orderBy('ocurrencias.id', 'desc')->get()->toArray();
-        } else {
+        $cacheKey = 'dash_oc_' . now()->format('Ymd');
+        $data = cache()->remember($cacheKey, 60, function () {
             $hoy = now()->format('d/m/Y');
-            $ayer = now()->subDay()->format('d/m/Y');
-            $this->ocurrencias = $query->whereIn('ocurrencias.fecha', [$hoy, $ayer])
-                ->orderBy('ocurrencias.fecha', 'desc')->orderBy('ocurrencias.id', 'desc')->get()->toArray();
+
+            $ocurrenciasHoy = Ocurrencia::where('fecha', $hoy)
+                ->orderBy('hora_ingreso', 'desc')
+                ->orderBy('id', 'desc')
+                ->limit(8)
+                ->get()
+                ->map(fn($o) => [
+                    'id' => $o->id,
+                    'persona' => t($o->persona_nombre),
+                    'tipo' => t($o->tipo),
+                    'hora_ingreso' => $o->hora_ingreso,
+                    'hora_salida' => $o->hora_salida,
+                    'vehiculo' => $o->vehiculo,
+                    'destino' => t($o->destino),
+                    'turno' => $o->turno,
+                ])
+                ->toArray();
+
+            $ocurrenciasRecientes = [];
+            if (count($ocurrenciasHoy) === 0) {
+                $ocurrenciasRecientes = Ocurrencia::orderBy('fecha', 'desc')
+                    ->orderBy('id', 'desc')
+                    ->limit(8)
+                    ->get()
+                    ->map(fn($o) => [
+                        'id' => $o->id,
+                        'persona' => t($o->persona_nombre),
+                        'tipo' => t($o->tipo),
+                        'hora_ingreso' => $o->hora_ingreso,
+                        'hora_salida' => $o->hora_salida,
+                        'vehiculo' => $o->vehiculo,
+                        'destino' => t($o->destino),
+                        'turno' => $o->turno,
+                        'fecha' => $o->fecha,
+                    ])
+                    ->toArray();
+            }
+
+            return compact('ocurrenciasHoy', 'ocurrenciasRecientes');
+        });
+
+        $this->ocurrenciasHoy = $data['ocurrenciasHoy'];
+        $this->ocurrenciasRecientes = $data['ocurrenciasRecientes'];
+    }
+
+    public function loadAsistenciaHoy()
+    {
+        $cacheKey = 'dash_asistencia_' . now()->format('Ymd');
+        $this->asistenciaHoy = cache()->remember($cacheKey, 60, function () {
+            $hoy = now()->format('d/m/Y');
+            return Asistencia::where('fecha', $hoy)
+                ->orderBy('hora_entrada')
+                ->get()
+                ->map(fn($a) => [
+                    'persona' => t($a->persona_nombre),
+                    'hora_entrada' => $a->hora_entrada,
+                    'tardanza' => $a->tardanza_min,
+                    'horas' => $a->horas_trabajadas,
+                    'etiqueta' => $a->etiqueta,
+                ])
+                ->toArray();
+        });
+    }
+
+    public function loadPersonalOnline()
+    {
+        $cacheKey = 'dash_online_' . now()->format('YmdH');
+        $this->personalOnline = cache()->remember($cacheKey, 60, function () {
+            $hoy = now()->format('d/m/Y');
+            $online = Ocurrencia::where('fecha', $hoy)
+                ->where(function($q) {
+                    $q->whereNull('hora_salida')->orWhere('hora_salida', '');
+                })
+                ->whereNotNull('hora_ingreso')
+                ->where('hora_ingreso', '!=', '')
+                ->get()
+                ->unique('persona_nombre')
+                ->values()
+                ->map(fn($o) => [
+                    'name' => t($o->persona_nombre),
+                    'status' => $o->destino ? 'En ' . t($o->destino) : ($o->vehiculo ? 'En ruta' : 'En oficina'),
+                    'online' => true,
+                ])
+                ->toArray();
+
+            $activos = Personal::where('estado', 'ACTIVO')
+                ->whereNotIn('id', function($q) use ($hoy) {
+                    $q->select('persona_id')
+                      ->from('ocurrencias')
+                      ->where('fecha', $hoy)
+                      ->whereNotNull('hora_ingreso')
+                      ->where('hora_ingreso', '!=', '')
+                      ->where(function($sub) {
+                          $sub->whereNull('hora_salida')->orWhere('hora_salida', '');
+                      });
+                })
+                ->limit(5)
+                ->get()
+                ->map(fn($p) => [
+                    'name' => t($p->nombre),
+                    'status' => '',
+                    'online' => false,
+                ])
+                ->toArray();
+
+            return array_merge($online, $activos);
+        });
+    }
+
+    public function loadNotificaciones()
+    {
+        $hoy = now()->format('d/m/Y');
+        $this->notificaciones = [];
+
+        $ocurrenciasSinCerrar = Ocurrencia::where('fecha', $hoy)
+            ->where(function($q) {
+                $q->whereNull('hora_salida')->orWhere('hora_salida', '');
+            })
+            ->count();
+        if ($ocurrenciasSinCerrar > 0) {
+            $this->notificaciones[] = [
+                'tipo' => 'danger',
+                'titulo' => "{$ocurrenciasSinCerrar} ocurrencias sin cerrar",
+                'desc' => 'Personal aún en comisión sin registrar salida',
+            ];
+        }
+
+        if (count($this->proximosCumpleanos) > 0) {
+            $this->notificaciones[] = [
+                'tipo' => 'warning',
+                'titulo' => 'Cumpleaños de ' . $this->proximosCumpleanos[0]['nombre'],
+                'desc' => $this->proximosCumpleanos[0]['fecha'] . ' — Próximamente',
+            ];
+        }
+
+        $pendientesPalm = Personal::where('estado', 'ACTIVO')
+            ->whereNotIn('id', function($q) use ($hoy) {
+                $q->select('persona_id')
+                  ->from('asistencia')
+                  ->where('fecha', $hoy);
+            })
+            ->count();
+        if ($pendientesPalm > 0) {
+            $this->notificaciones[] = [
+                'tipo' => 'info',
+                'titulo' => "{$pendientesPalm} empleados sin registro",
+                'desc' => 'Personal activo sin asistencia registrada hoy',
+            ];
+        }
+
+        $tardanzas = $this->kpis['tardanzas_hoy'] ?? 0;
+        if ($tardanzas > 0) {
+            $this->notificaciones[] = [
+                'tipo' => 'danger',
+                'titulo' => "{$tardanzas} tardanzas hoy",
+                'desc' => 'Personal que ingresó después de su hora',
+            ];
         }
     }
 
-    public function selectOcurrencia($id)
+    public function loadChartData()
     {
-        $this->selectedId = $id === $this->selectedId ? null : $id;
+        $cacheKey = 'dash_chart_' . now()->format('Ym');
+        $data = cache()->remember($cacheKey, 300, function () {
+            $mes = now()->month;
+            $anio = now()->year;
+
+            $tipos = TipoOcurrencia::where('activo', true)->pluck('nombre', 'id');
+            $data = DB::table('ocurrencias')
+                ->select('tipo_id', DB::raw('COUNT(*) as total'))
+                ->where('mes', $mes)
+                ->where('anio', $anio)
+                ->whereNotNull('tipo_id')
+                ->groupBy('tipo_id')
+                ->get()
+                ->keyBy('tipo_id');
+
+            $labels = [];
+            $values = [];
+            foreach ($tipos as $id => $nombre) {
+                if (isset($data[$id])) {
+                    $labels[] = $nombre;
+                    $values[] = (int) $data[$id]->total;
+                }
+            }
+
+            $chartTipoData = null;
+            if (!empty($labels)) {
+                $palette = ['#6366f1','#a855f7','#ec4899','#f43f5e','#f97316','#eab308','#22c55e','#14b8a6','#06b6d4','#3b82f6'];
+                $chartTipoData = [
+                    'labels' => $labels,
+                    'data' => $values,
+                    'colors' => array_slice($palette, 0, count($labels)),
+                ];
+            }
+
+            $dates = [];
+            $dayLabels = [];
+            for ($i = 6; $i >= 0; $i--) {
+                $d = now()->subDays($i);
+                $f = $d->format('d/m/Y');
+                $dates[] = $f;
+                $dayLabels[$f] = ucfirst($d->isoFormat('dddd'));
+            }
+
+            $counts = Ocurrencia::whereIn('fecha', $dates)
+                ->groupBy('fecha')
+                ->pluck(DB::raw('COUNT(*) as total'), 'fecha')
+                ->toArray();
+
+            $chartSemanalData = [];
+            foreach ($dates as $f) {
+                $chartSemanalData[] = [
+                    'label' => $dayLabels[$f],
+                    'fecha' => $f,
+                    'total' => (int) ($counts[$f] ?? 0),
+                ];
+            }
+
+            return compact('chartTipoData', 'chartSemanalData');
+        });
+
+        $this->chartTipoData = $data['chartTipoData'];
+        $this->chartSemanalData = $data['chartSemanalData'];
     }
 
-    public function tipoColor($tipo)
+    public function loadCalendario()
     {
-        $t = TipoOcurrencia::where('nombre', $tipo)->first();
-        return $t ? $t->color : '#888899';
+        $cacheKey = 'dash_cal_' . now()->format('Ym');
+        $data = cache()->remember($cacheKey, 300, function () {
+            $now = now();
+            $year = $now->year;
+            $month = $now->month;
+            $daysInMonth = $now->daysInMonth;
+            $firstDayOfWeek = now()->startOfMonth()->dayOfWeek;
+
+            $dias = [];
+            for ($i = 0; $i < $firstDayOfWeek; $i++) {
+                $dias[] = null;
+            }
+            for ($d = 1; $d <= $daysInMonth; $d++) {
+                $dias[] = $d;
+            }
+
+            $fullDates = [];
+            $shortDates = [];
+            for ($d = 1; $d <= $daysInMonth; $d++) {
+                $fullDates[] = str_pad($d, 2, '0', STR_PAD_LEFT) . '/' . str_pad($month, 2, '0', STR_PAD_LEFT) . '/' . $year;
+                $shortDates[] = str_pad($d, 2, '0', STR_PAD_LEFT) . '/' . str_pad($month, 2, '0', STR_PAD_LEFT);
+            }
+
+            $ocCounts = Ocurrencia::whereIn('fecha', $fullDates)
+                ->groupBy('fecha')
+                ->pluck(DB::raw('COUNT(*) as total'), 'fecha')
+                ->toArray();
+
+            $asCounts = Asistencia::whereIn('fecha', $fullDates)
+                ->groupBy('fecha')
+                ->pluck(DB::raw('COUNT(*) as total'), 'fecha')
+                ->toArray();
+
+            $bdCounts = Cumpleano::whereIn(DB::raw("SUBSTR(fecha, 1, 5)"), $shortDates)
+                ->groupBy(DB::raw("SUBSTR(fecha, 1, 5)"))
+                ->pluck(DB::raw('COUNT(*) as total'), DB::raw("SUBSTR(fecha, 1, 5)"))
+                ->toArray();
+
+            $eventos = [];
+            for ($d = 1; $d <= $daysInMonth; $d++) {
+                $events = [];
+                $fecha = $fullDates[$d - 1];
+                $fechaCorta = $shortDates[$d - 1];
+
+                $ocCount = (int) ($ocCounts[$fecha] ?? 0);
+                if ($ocCount > 0) {
+                    $events[] = ['type' => 'ocurrencia', 'count' => $ocCount];
+                }
+
+                $asCount = (int) ($asCounts[$fecha] ?? 0);
+                if ($asCount > 0) {
+                    $events[] = ['type' => 'asistencia', 'count' => $asCount];
+                }
+
+                $birthday = (int) ($bdCounts[$fechaCorta] ?? 0);
+                if ($birthday > 0) {
+                    $events[] = ['type' => 'cumple', 'count' => $birthday];
+                }
+
+                if (!empty($events)) {
+                    $eventos[$d] = $events;
+                }
+            }
+
+            return compact('dias', 'eventos');
+        });
+
+        $this->calendarioMes = $data['dias'];
+        $this->calendarioEventos = $data['eventos'];
     }
 
-    public function newQuickOcurrencia()
+    public function refreshData()
     {
-        $this->qf_persona_nombre = '';
-        $this->qf_tipo = '';
-        $this->qf_otro = '';
-        $this->qf_detalles = '';
-        $this->qf_observacion = '';
-        $this->qf_turno = $this->detectarTurnoActual();
-        $this->qf_hora_ingreso = $this->qf_turno === 'NOCHE' ? $this->configHoraEntradaNoche : $this->configHoraEntradaDia;
-        $this->qf_hora_salida = $this->qf_turno === 'NOCHE' ? $this->configHoraSalidaNoche : $this->configHoraSalidaDia;
-        $this->showQuickForm = true;
-    }
-
-    public function updatedQfTurno()
-    {
-        if (!$this->showQuickForm) return;
-        $this->qf_hora_ingreso = $this->qf_turno === 'NOCHE' ? $this->configHoraEntradaNoche : $this->configHoraEntradaDia;
-        $this->qf_hora_salida = $this->qf_turno === 'NOCHE' ? $this->configHoraSalidaNoche : $this->configHoraSalidaDia;
-    }
-
-    public function saveQuickOcurrencia()
-    {
-        $this->validate(['qf_persona_nombre' => 'required']);
-
-        $parts = explode('/', now()->format('d/m/Y'));
-        $persona = Personal::where('nombre', $this->qf_persona_nombre)->first();
-        $tipoModel = $this->qf_tipo ? TipoOcurrencia::where('nombre', $this->qf_tipo)->first() : null;
-
-        Ocurrencia::create([
-            'fecha' => now()->format('d/m/Y'),
-            'hora_ingreso' => $this->qf_hora_ingreso,
-            'hora_salida' => $this->qf_hora_salida,
-            'persona_nombre' => $this->qf_persona_nombre,
-            'persona_id' => $persona?->id,
-            'tipo' => $this->qf_tipo,
-            'tipo_id' => $tipoModel?->id,
-            'otro' => $this->qf_otro,
-            'detalles' => $this->qf_detalles,
-            'observacion' => $this->qf_observacion,
-            'turno' => $this->qf_turno,
-            'mes' => $parts[1],
-            'anio' => $parts[2],
-        ]);
-
-        $this->showQuickForm = false;
-        $this->dispatch('notify', message: 'Ocurrencia registrada.', type: 'success');
-        $this->refreshData();
-    }
-
-    public function cancelQuickForm()
-    {
-        $this->showQuickForm = false;
-    }
-
-    public function updatedSearch()
-    {
+        $this->loadCumpleanos();
+        $this->loadKpis();
         $this->loadOcurrencias();
+        $this->loadAsistenciaHoy();
+        $this->loadPersonalOnline();
+        $this->loadNotificaciones();
+        $this->loadChartData();
+        $this->loadCalendario();
     }
 
     public function render()
     {
-        return view('livewire.olimpo.dashboard', [
-            'nombres' => Personal::activos()->pluck('nombre')->toArray(),
-            'tipos' => TipoOcurrencia::activos()->pluck('nombre')->toArray(),
-        ])->layout('layouts.olimpo', ['title' => 'Dashboard']);
+        return view('livewire.olimpo.dashboard')->layout('layouts.olimpo', ['title' => 'Dashboard']);
     }
 }

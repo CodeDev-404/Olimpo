@@ -5,26 +5,29 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ config('app.name', 'Laravel') }}</title>
+        <title>OLIMPO — {{ config('app.name', 'Laravel') }}</title>
 
-        <!-- Fonts -->
-        <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+        <link rel="icon" type="image/jpeg" href="/favicon.ico">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-        <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="font-sans text-gray-900 antialiased">
-        <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-100 dark:bg-gray-900">
-            <div>
-                <a href="/" wire:navigate>
-                    <x-application-logo class="w-20 h-20 fill-current text-gray-500" />
-                </a>
-            </div>
-
-            <div class="w-full sm:max-w-md mt-6 px-6 py-4 bg-white dark:bg-gray-800 shadow-md overflow-hidden sm:rounded-lg">
-                {{ $slot }}
-            </div>
+    <body class="font-sans antialiased text-ink-900 bg-[#f6f8fa] dark:from-ink-950 dark:to-ink-900 min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0">
+        <div>
+            <a href="/" wire:navigate class="block mx-auto w-fit">
+                <img src="{{ asset('logo.png') }}"
+                     alt="OLIMPO"
+                     class="w-16 h-16 rounded-xl bg-[#5D87FF] mx-auto mb-2 shadow-lg shadow-[#5D87FF]/20"
+                     style="object-fit: cover;">
+            </a>
         </div>
+
+        <div class="w-full sm:max-w-md mt-4 px-6 py-5 bg-white dark:bg-[#1C1F2E] rounded-xl border border-[#e5eaef] dark:border-white/[0.06]">
+            {{ $slot }}
+        </div>
+
+        <p class="mt-6 text-xs text-ink-400 dark:text-ink-500">Sistema de Control — OLIMPO</p>
     </body>
 </html>

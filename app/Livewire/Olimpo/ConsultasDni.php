@@ -16,7 +16,7 @@ class ConsultasDni extends Component
 
     public string $modo = 'simple';
 
-    public ?array $resultado = null;
+    protected ?array $resultado = null;
 
     public array $historial = [];
 
@@ -29,6 +29,8 @@ class ConsultasDni extends Component
     public array $herramientas = [];
 
     public array $premiumHerramientas = [];
+
+    private int $historialLimit = 10;
 
     public function mount()
     {
@@ -67,8 +69,8 @@ class ConsultasDni extends Component
     {
         $this->historial = ConsultaHistorial::where('user_id', auth()->id())
             ->latest()
-            ->take(20)
-            ->get()
+            ->take($this->historialLimit)
+            ->get(['id', 'tipo', 'documento', 'nombre_mostrar', 'created_at'])
             ->toArray();
     }
 
@@ -84,7 +86,7 @@ class ConsultasDni extends Component
             ['id' => 'busqueda-nombres', 'label' => 'Búsqueda por nombres', 'input' => 'name', 'color' => 'bg-cyan-500', 'group' => 'Completo'],
             ['id' => 'dni-virtual', 'label' => 'DNI Virtual', 'input' => 'dni', 'color' => 'bg-teal-500', 'group' => 'Completo'],
             ['id' => 'arbol-genealogico', 'label' => 'Árbol genealógico', 'input' => 'dni', 'color' => 'bg-emerald-500', 'group' => 'Completo'],
-            ['id' => 'reconocimiento-facial', 'label' => 'Reconocimiento facial', 'input' => 'dni', 'color' => 'bg-violet-500', 'group' => 'Completo'],
+            ['id' => 'reconocimiento-facial', 'label' => 'Reconocimiento facial', 'input' => 'dni', 'color' => 'bg-[#5D87FF]', 'group' => 'Completo'],
             ['id' => 'justicia', 'label' => 'Justicia', 'input' => 'dni', 'color' => 'bg-red-500', 'group' => 'Completo'],
             ['id' => 'sentinel', 'label' => 'Sentinel', 'input' => 'dni', 'color' => 'bg-orange-500', 'group' => 'Completo'],
             ['id' => 'vehiculo', 'label' => 'Vehículo', 'input' => 'plate', 'color' => 'bg-rose-500', 'group' => 'Completo'],
@@ -188,8 +190,9 @@ class ConsultasDni extends Component
     {
         abort_unless(auth()->user()?->role === 'admin', 403);
         $entry = $this->historial[$index] ?? null;
-        if ($entry && $entry['resultado_json']) {
-            $this->resultado = $entry['resultado_json'];
+        if ($entry) {
+            $full = ConsultaHistorial::find($entry['id']);
+            $this->resultado = $full?->resultado_json;
             $this->documento = $entry['documento'];
             $this->searchTerm = $entry['documento'];
             $this->modalTitle = 'RESULTADO: '.strtoupper($entry['tipo']);
@@ -207,7 +210,8 @@ class ConsultasDni extends Component
 
     public function render()
     {
-        return view('livewire.olimpo.consultas-dni')
-            ->layout('layouts.olimpo', ['title' => 'Consultas DNI / RUC']);
+        return view('livewire.olimpo.consultas-dni', [
+            'resultado' => $this->resultado,
+        ])->layout('layouts.olimpo', ['title' => 'Consultas DNI / RUC']);
     }
 }

@@ -21,26 +21,27 @@
         <thead>
             <tr>
                 <th>#</th>
-                <th>NOMBRE</th>
-                <th>FECHA</th>
-                <th>H. ENTRADA</th>
-                <th>H. SALIDA</th>
-                <th>TARDANZA (min)</th>
-                <th>H. TRABAJADAS</th>
-                <th>ETIQUETA</th>
+                @foreach($columns as $label)
+                    <th>{{ $label }}</th>
+                @endforeach
             </tr>
         </thead>
         <tbody>
             @foreach($rows as $i => $a)
                 <tr>
                     <td>{{ $i + 1 }}</td>
-                    <td class="nombre-cell">{{ $a['persona_nombre'] }}</td>
-                    <td>{{ $a['fecha'] }}</td>
-                    <td>{{ $a['hora_entrada'] }}</td>
-                    <td>{{ $a['hora_salida'] }}</td>
-                    <td>{{ $a['tardanza_min'] }}</td>
-                    <td>{{ number_format($a['horas_trabajadas'], 1) }}h</td>
-                    <td style="font-weight:bold">{{ $a['etiqueta'] }}</td>
+                    @foreach($columns as $key => $label)
+                        @php $val = $a[$key] ?? ''; @endphp
+                        <td class="{{ $key === 'persona_nombre' ? 'nombre-cell' : '' }}">
+                            @if($key === 'horas_trabajadas' && $val !== '')
+                                {{ number_format((float)$val, 1) }}h
+                            @elseif($key === 'etiqueta')
+                                <span style="font-weight:bold">{{ $val ?: '—' }}</span>
+                            @else
+                                {{ $val ?: '—' }}
+                            @endif
+                        </td>
+                    @endforeach
                 </tr>
             @endforeach
         </tbody>

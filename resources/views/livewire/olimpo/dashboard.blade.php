@@ -1,43 +1,52 @@
 <div>
-    {{-- Enlaces rápidos --}}
-    <div class="flex flex-wrap items-center gap-2 mb-5">
-        <a href="{{ route('olimpo.asistencia') }}" class="btn btn-sm btn-outline">
-            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-            Asistencia
-        </a>
-        <a href="{{ route('olimpo.ocurrencias') }}" class="btn btn-sm btn-outline">
-            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            Ocurrencias
-        </a>
-        <a href="{{ route('olimpo.personal') }}" class="btn btn-sm btn-outline">
-            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-            Personal
-        </a>
-        <a href="{{ route('olimpo.config') }}" class="btn btn-sm btn-outline">
-            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-            Ajustes
-        </a>
-        <span class="ml-auto text-xs text-ink-400">Dashboard</span>
+    @php $greeting = \App\Helpers\GreetingHelper::getGreeting(auth()->id()); @endphp
+
+    {{-- Greeting Banner --}}
+    <div class="bg-white dark:bg-[#1C1F2E] rounded-xl border border-[#e5eaef] dark:border-white/[0.06] p-5 mb-6 flex items-center justify-between gap-4">
+        <div class="flex items-start gap-4">
+            <div class="w-12 h-12 rounded-xl bg-[#5D87FF]/10 flex items-center justify-center shrink-0">
+                <i data-lucide="sun" class="w-6 h-6 text-[#5D87FF]"></i>
+            </div>
+            <div>
+                <h2 class="text-lg font-bold text-ink-900 dark:text-white">&iexcl;Hola, {{ auth()->user()->name }}! {{ $greeting['saludo'] }}.</h2>
+                <p class="text-sm text-ink-500 dark:text-white/60 mt-0.5">Que tengas un excelente servicio hoy!</p>
+                <div class="flex items-center gap-3 mt-3 text-xs text-ink-400 dark:text-white/50">
+                    <span class="inline-flex items-center gap-1.5">
+                        <i data-lucide="quote" class="w-3 h-3"></i>
+                        &ldquo;{{ $greeting['frase'] }}&rdquo;
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="flex gap-2 shrink-0">
+            <a href="{{ route('olimpo.ocurrencias') }}" class="quick-action quick-action-primary">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>Nueva Ocurrencia
+            </a>
+        </div>
     </div>
 
-    {{-- Cumpleaños del día --}}
+    {{-- Birthday Alert --}}
     @if(count($cumpleanos) > 0)
-    <div class="mb-6 rounded-lg border-2 border-ember-400 bg-gradient-to-r from-amber-50 to-yellow-50 p-4 shadow-sm">
-        <div class="flex items-start gap-3">
-            <div class="flex-shrink-0 text-3xl">🎂</div>
+    <div class="bg-white dark:bg-[#1C1F2E] rounded-xl border border-[#e5eaef] dark:border-white/[0.06] p-5 mb-6">
+        <div class="flex items-start gap-4">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shrink-0">
+                <i data-lucide="cake" class="w-5 h-5 text-white"></i>
+            </div>
             <div class="flex-1">
-                <h3 class="text-sm font-bold text-amber-800 uppercase tracking-wider mb-2">¡Cumpleaños de hoy!</h3>
+                <h3 class="text-sm font-bold text-amber-600 dark:text-amber-300 uppercase tracking-wider mb-3 font-display">¡Cumpleaños de hoy!</h3>
                 <div class="space-y-2">
                     @foreach($cumpleanos as $c)
-                    <div class="flex items-center gap-3 p-3 bg-white rounded-lg shadow-sm border border-amber-200">
-                        <span class="text-2xl">🎉</span>
+                    <div class="flex items-center gap-3 p-3 bg-amber-50 dark:bg-amber-500/5 rounded-xl border border-amber-200/40 dark:border-amber-500/10">
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shrink-0">
+                            <i data-lucide="party-popper" class="w-4 h-4 text-white"></i>
+                        </div>
                         <div class="flex-1">
-                            <p class="font-bold text-ink-900 capitalize">{{ $c['nombre'] }}</p>
+                            <p class="font-semibold text-ink-900 dark:text-white font-display">{{ $c['nombre'] }}</p>
                             @if($c['parentesco'])
-                                <p class="text-sm text-ink-600 capitalize">{{ $c['parentesco'] }}</p>
+                                <p class="text-xs text-ink-500 dark:text-white/50 capitalize">{{ $c['parentesco'] }}</p>
                             @endif
                         </div>
-                        <span class="px-2 py-1 bg-amber-100 text-amber-700 text-xs font-semibold rounded-full">HOY</span>
+                        <span class="px-3 py-1 bg-amber-200/80 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300 text-[10px] font-bold rounded-lg uppercase tracking-wider font-label">HOY</span>
                     </div>
                     @endforeach
                 </div>
@@ -46,233 +55,399 @@
     </div>
     @endif
 
-    {{-- Estadísticas --}}
-    <div class="flex items-center justify-between mb-4">
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 flex-1">
-            <div class="stat-card border-l-[3px] border-l-red-500">
-                <p class="stat-label">Hoy</p>
-                <div class="flex items-end justify-between mt-1">
-                    <p class="stat-value">{{ $stats['hoy'] ?? 0 }}</p>
-                    <svg class="w-8 h-8 text-red-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    {{-- KPI Grid --}}
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
+        <div class="kpi-card bg-white dark:bg-[#1C1F2E] rounded-xl border border-[#e5eaef] dark:border-white/[0.06] p-5">
+            <div class="flex items-start justify-between mb-4">
+                <div class="w-11 h-11 rounded-lg bg-gradient-to-br from-[#5D87FF] to-[#49BEFF] flex items-center justify-center">
+                    <i data-lucide="users" class="w-5 h-5 text-white"></i>
                 </div>
-                <p class="text-[11px] text-ink-400 mt-1">Ocurrencias hoy</p>
+                <span class="inline-flex items-center gap-0.5 text-[11px] font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/15 px-1.5 py-0.5 rounded-lg">↑ {{ $kpis['personal_pct'] }}%</span>
             </div>
-            <div class="stat-card border-l-[3px] border-l-ember-500">
-                <p class="stat-label">Semana</p>
-                <div class="flex items-end justify-between mt-1">
-                    <p class="stat-value">{{ $stats['semana'] ?? 0 }}</p>
-                    <svg class="w-8 h-8 text-ember-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            <p class="text-2xl font-bold text-ink-900 dark:text-white">{{ $kpis['personal_activo'] }}<span class="text-base font-normal text-ink-400 mx-0.5">/</span><span class="text-base font-normal text-ink-400">{{ $kpis['personal_total'] }}</span></p>
+            <p class="text-sm text-ink-500 dark:text-white/60 mt-1">Personal Activo</p>
+            <div class="flex items-center gap-1 mt-3">
+                <div class="flex-1 h-1.5 rounded-full bg-ink-100 dark:bg-white/[0.06]">
+                    <div class="h-full rounded-full bg-gradient-to-r from-[#5D87FF] to-[#49BEFF]" style="width:{{ $kpis['personal_total'] > 0 ? ($kpis['personal_activo'] / $kpis['personal_total'] * 100) : 0 }}%"></div>
                 </div>
-                <p class="text-[11px] text-ink-400 mt-1">Ocurrencias en 7 días</p>
             </div>
-            <div class="stat-card border-l-[3px] border-l-green-500">
-                <p class="stat-label">Mes</p>
-                <div class="flex items-end justify-between mt-1">
-                    <p class="stat-value">{{ $stats['mes'] ?? 0 }}</p>
-                    <svg class="w-8 h-8 text-green-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        </div>
+        <div class="kpi-card bg-white dark:bg-[#1C1F2E] rounded-xl border border-[#e5eaef] dark:border-white/[0.06] p-5">
+            <div class="flex items-start justify-between mb-4">
+                <div class="w-11 h-11 rounded-lg bg-gradient-to-br from-[#13DEB9] to-[#49BEFF] flex items-center justify-center">
+                    <i data-lucide="clipboard-list" class="w-5 h-5 text-white"></i>
                 </div>
-                <p class="text-[11px] text-ink-400 mt-1">Ocurrencias del mes</p>
+                <span class="inline-flex items-center gap-0.5 text-[11px] font-semibold text-ink-400 bg-ink-100 dark:bg-white/[0.06] px-1.5 py-0.5 rounded-lg">{{ $kpis['ocurrencias_hoy'] }} hoy</span>
             </div>
-            <div class="stat-card border-l-[3px] border-l-blue-500">
-                <p class="stat-label">Total</p>
-                <div class="flex items-end justify-between mt-1">
-                    <p class="stat-value">{{ $stats['total'] ?? 0 }}</p>
-                    <svg class="w-8 h-8 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+            <p class="text-2xl font-bold text-ink-900 dark:text-white">{{ $kpis['ocurrencias_mes'] }}</p>
+            <p class="text-sm text-ink-500 dark:text-white/60 mt-1">Ocurrencias del Mes</p>
+            <div class="flex items-center gap-1 mt-3">
+                <div class="flex-1 h-1.5 rounded-full bg-ink-100 dark:bg-white/[0.06]">
+                    <div class="h-full rounded-full bg-gradient-to-r from-[#13DEB9] to-[#49BEFF]" style="width:{{ $kpis['ocurrencias_mes'] > 0 ? min(100, $kpis['ocurrencias_mes'] / 200 * 100) : 0 }}%"></div>
                 </div>
-                <p class="text-[11px] text-ink-400 mt-1">Registros históricos</p>
+            </div>
+        </div>
+        <div class="kpi-card bg-white dark:bg-[#1C1F2E] rounded-xl border border-[#e5eaef] dark:border-white/[0.06] p-5">
+            <div class="flex items-start justify-between mb-4">
+                <div class="w-11 h-11 rounded-lg bg-gradient-to-br from-[#FFAE1F] to-[#FA896B] flex items-center justify-center">
+                    <i data-lucide="truck" class="w-5 h-5 text-white"></i>
+                </div>
+                <span class="inline-flex items-center gap-0.5 text-[11px] font-semibold text-ink-400 bg-ink-100 dark:bg-white/[0.06] px-1.5 py-0.5 rounded-lg">{{ $kpis['vehiculos_uso'] }} activos</span>
+            </div>
+            <p class="text-2xl font-bold text-ink-900 dark:text-white">{{ $kpis['vehiculos_total'] }}</p>
+            <p class="text-sm text-ink-500 dark:text-white/60 mt-1">Vehículos Registrados</p>
+            <div class="flex items-center gap-1.5 mt-3">
+                <div class="flex-1 h-1.5 rounded-full bg-ink-100 dark:bg-white/[0.06]">
+                    <div class="h-full rounded-full bg-gradient-to-r from-[#FFAE1F] to-[#FA896B]" style="width:{{ $kpis['vehiculos_total'] > 0 ? ($kpis['vehiculos_uso'] / $kpis['vehiculos_total'] * 100) : 0 }}%"></div>
+                </div>
+                <span class="text-xs font-semibold text-ink-500 dark:text-white/60">{{ $kpis['vehiculos_total'] > 0 ? round($kpis['vehiculos_uso'] / $kpis['vehiculos_total'] * 100) : 0 }}%</span>
+            </div>
+        </div>
+        <div class="kpi-card bg-white dark:bg-[#1C1F2E] rounded-xl border border-[#e5eaef] dark:border-white/[0.06] p-5">
+            <div class="flex items-start justify-between mb-4">
+                <div class="w-11 h-11 rounded-lg bg-gradient-to-br from-[#539BFF] to-[#5D87FF] flex items-center justify-center">
+                    <i data-lucide="fuel" class="w-5 h-5 text-white"></i>
+                </div>
+                <span class="inline-flex items-center gap-0.5 text-[11px] font-semibold text-ink-400 bg-ink-100 dark:bg-white/[0.06] px-1.5 py-0.5 rounded-lg">S/ {{ number_format($kpis['combustible_mes'], 2) }}</span>
+            </div>
+            <p class="text-2xl font-bold text-ink-900 dark:text-white">S/ {{ number_format($kpis['combustible_mes'], 2) }}</p>
+            <p class="text-sm text-ink-500 dark:text-white/60 mt-1">Combustible del Mes</p>
+            <div class="flex items-center gap-1.5 mt-3">
+                <div class="flex-1 h-1.5 rounded-full bg-ink-100 dark:bg-white/[0.06]">
+                    <div class="h-full rounded-full bg-gradient-to-r from-[#539BFF] to-[#5D87FF]" style="width:{{ $kpis['vehiculos_total'] > 0 ? min(100, $kpis['vehiculos_uso'] / $kpis['vehiculos_total'] * 100) : 0 }}%"></div>
+                </div>
+                <span class="text-xs font-semibold text-ink-500 dark:text-white/60">{{ $kpis['vehiculos_total'] > 0 ? round($kpis['vehiculos_uso'] / $kpis['vehiculos_total'] * 100) : 0 }}%</span>
             </div>
         </div>
     </div>
 
-    {{-- Búsqueda y acciones --}}
-    <div class="card mb-5">
-        <div class="card-body">
-            <div class="flex flex-wrap items-center gap-3">
-                <div class="relative flex-1 min-w-[200px]">
-                    <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                    </svg>
-                    <input type="text" wire:model.live="search" placeholder="Buscar ocurrencia..."
-                        class="input-field pl-9 w-full" />
-                </div>
-                @if($search)
-                    <button wire:click="$set('search', '')" class="btn btn-ghost btn-sm">Limpiar</button>
+    {{-- Quick Actions --}}
+    <div class="flex items-center gap-3 mb-6">
+        <a href="{{ route('olimpo.ocurrencias') }}" class="quick-action quick-action-primary">
+            <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>Nueva ocurrencia
+        </a>
+        <a href="{{ route('olimpo.personal') }}" class="quick-action quick-action-success">
+            <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>Registrar personal
+        </a>
+        <a href="{{ route('olimpo.asistencia') }}" class="quick-action quick-action-warning">
+            <i data-lucide="calendar" class="w-3.5 h-3.5"></i>Tomar asistencia
+        </a>
+        <a href="{{ route('olimpo.control-vehiculos') }}" class="quick-action quick-action-danger">
+            <i data-lucide="truck" class="w-3.5 h-3.5"></i>Registrar vehículo
+        </a>
+    </div>
+
+    {{-- Main 2-col Grid --}}
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
+        {{-- Activity Timeline --}}
+        <div class="lg:col-span-2 bg-white dark:bg-[#1C1F2E] rounded-xl border border-[#e5eaef] dark:border-white/[0.06]">
+            <div class="flex items-center justify-between px-5 py-4 border-b border-[#e5eaef] dark:border-white/[0.06]">
+                <h3 class="text-sm font-bold text-ink-900 dark:text-white flex items-center gap-2">
+                    <i data-lucide="activity" class="w-4 h-4 text-[#5D87FF]"></i>Actividad Reciente
+                </h3>
+                <a href="{{ route('olimpo.ocurrencias') }}" class="text-xs font-semibold text-[#5D87FF]">Ver todo →</a>
+            </div>
+            <div class="p-5">
+                @php $items = count($ocurrenciasHoy) > 0 ? $ocurrenciasHoy : $ocurrenciasRecientes; @endphp
+                @if(count($items) > 0)
+                    @foreach(array_slice($items, 0, 6) as $o)
+                    <div class="flex items-start gap-3 py-3 {{ !$loop->first ? 'border-t border-[#e5eaef] dark:border-white/[0.06]' : '' }}">
+                        <div class="w-9 h-9 rounded-lg bg-[#5D87FF]/10 text-[#5D87FF] flex items-center justify-center text-xs font-bold shrink-0">
+                            {{ strtoupper(substr($o['persona'], 0, 2)) }}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="text-sm font-semibold text-ink-900 dark:text-white truncate">{{ $o['persona'] }}</div>
+                            <div class="text-xs text-ink-500 dark:text-white/50 mt-0.5">{{ $o['tipo'] }} @if($o['vehiculo'])· {{ $o['vehiculo'] }} @endif @if($o['destino'])→ {{ $o['destino'] }} @endif</div>
+                            <div class="text-[10px] text-ink-400 dark:text-white/40 mt-0.5">{{ $o['hora_ingreso'] ?? $o['hora_salida'] ?? '—' }} @if(isset($o['fecha'])) · {{ $o['fecha'] }} @endif</div>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider shrink-0 self-start {{ $o['tipo'] === 'INGRESO' || $o['tipo'] === 'ENTRADA' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' : ($o['tipo'] === 'SALIDA' ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' : 'bg-blue-50 text-[#539BFF] dark:bg-blue-500/10 dark:text-blue-400') }}">
+                            {{ $o['tipo'] === 'INGRESO' || $o['tipo'] === 'ENTRADA' ? 'Entrada' : ($o['tipo'] === 'SALIDA' ? 'Salida' : $o['tipo']) }}
+                        </span>
+                    </div>
+                    @endforeach
+                @else
+                    <p class="text-sm text-ink-400 dark:text-white/40 text-center py-8">Sin actividad registrada</p>
                 @endif
-                <button wire:click="newQuickOcurrencia" class="btn btn-primary btn-sm">
-                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-                    Nueva Ocurrencia
-                </button>
             </div>
         </div>
-    </div>
 
-    {{-- Timeline / Listado --}}
-    <div class="card" x-data="{ popTitle: '', popContent: '', showPop: false }">
-        <div class="card-header">
-            <span class="text-xs text-ink-500 font-medium">
-                {{ $search ? "Resultados para '{$search}' (" . count($ocurrencias) . ')' : 'Últimas 24 horas — ' . count($ocurrencias) . ' registro(s)' }}
-            </span>
-            <div class="flex items-center gap-1.5 text-[11px] text-ink-400">
-                <span class="inline-block w-1.5 h-1.5 rounded-full bg-green-500"></span> En vivo
-            </div>
-        </div>
-        <div class="card-body p-0">
-            <div class="overflow-x-auto">
-                <table class="table-adminlte">
-                    <thead>
-                        <tr>
-                            <th></th>
-                            <th>Fecha</th>
-                            <th>Hora</th>
-                            <th>Nombre</th>
-                            <th>Detalles</th>
-                            <th>Obs.</th>
-                            <th>Tipo</th>
-                            <th>Turno</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($ocurrencias as $i => $oc)
-                            <tr wire:click="selectOcurrencia({{ $oc['id'] }})"
-                                class="cursor-pointer {{ $selectedId === $oc['id'] ? 'bg-ink-50' : '' }}">
-                                <td>
-                                    <span class="w-2 h-2 rounded-full inline-block {{ $oc['fecha'] === now()->format('d/m/Y') ? 'bg-green-400' : 'bg-ink-300' }}"></span>
-                                </td>
-                                <td class="font-medium text-xs">@if(!empty($oc['fecha'])){{ $oc['fecha'] }}@else<span class="text-ink-300">—</span>@endif</td>
-                                <td class="tabular-nums text-xs">
-                                    @if(!empty($oc['hora_ingreso'])){{ $oc['hora_ingreso'] }}@else<span class="text-ink-300">—</span>@endif@if(!empty($oc['hora_salida']))-{{ $oc['hora_salida'] }}@endif
-                                </td>
-                                <td class="font-medium">@if(!empty($oc['persona_nombre'])){{ $oc['persona_nombre'] }}@else<span class="text-ink-300">—</span>@endif</td>
-                                <td class="max-w-[160px] truncate text-ink-500 text-xs cursor-pointer"
-                                    @dblclick="popContent = $el.dataset.content; popTitle = 'Detalles'; showPop = true"
-                                    data-content="{{ $oc['detalles'] ?? '' }}">
-                                    @if(!empty($oc['detalles'])){{ $oc['detalles'] }}@else<span class="text-ink-300">—</span>@endif
-                                </td>
-                                <td class="max-w-[100px] truncate text-ink-400 italic text-xs cursor-pointer"
-                                    @dblclick="popContent = $el.dataset.content; popTitle = 'Observación'; showPop = true"
-                                    data-content="{{ $oc['observacion'] ?? '' }}">
-                                    @if(!empty($oc['observacion'])){{ $oc['observacion'] }}@else<span class="text-ink-300">—</span>@endif
-                                </td>
-                                <td>
-                                    @if($oc['tipo'])
-                                        <span class="badge text-[10px]" style="background: {{ $this->tipoColor($oc['tipo']) }}18; color: {{ $this->tipoColor($oc['tipo']) }}">
-                                            {{ $oc['tipo'] }}
-                                        </span>
-                                    @else
-                                        <span class="text-ink-300">—</span>
-                                    @endif
-                                </td>
-                                <td>
-                                    <span class="inline-flex items-center gap-1 text-[10px] text-ink-500">
-                                        @php
-                                            $_turno = $oc['turno'] ?? null;
-                                            $_tc = match($_turno) { 'NOCHE' => 'bg-blue-900', 'DÍA' => 'bg-sky-400', default => 'bg-ink-300' };
-                                        @endphp
-                                        <span class="w-2 h-2 rounded-full inline-block {{ $_tc }}"></span>
-                                        @if(!empty($_turno)){{ $_turno }}@else<span class="text-ink-300">—</span>@endif
-                                    </span>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="8" class="px-3 py-12 text-center text-ink-400">
-                                    No hay ocurrencias registradas
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        <div x-show="showPop" x-cloak
-            class="modal-overlay"
-            @click.self="showPop = false"
-            x-transition:enter="transition ease-out duration-150"
-            x-transition:enter-start="opacity-0"
-            x-transition:enter-end="opacity-100">
-            <div class="modal-card max-w-lg"
-                @click.stop
-                x-transition:enter="transition ease-out duration-150"
-                x-transition:enter-start="opacity-0 scale-95"
-                x-transition:enter-end="opacity-100 scale-100">
-                <div class="modal-header">
-                    <h4 class="font-semibold text-ink-900 text-sm" x-text="popTitle"></h4>
-                    <button @click="showPop = false" class="p-1 text-ink-400 hover:text-ink-700 rounded-md hover:bg-ink-100">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </button>
+        {{-- Right column --}}
+        <div class="flex flex-col gap-5">
+            {{-- Attendance --}}
+            <div class="bg-white dark:bg-[#1C1F2E] rounded-xl border border-[#e5eaef] dark:border-white/[0.06]">
+                <div class="flex items-center justify-between px-5 py-4 border-b border-[#e5eaef] dark:border-white/[0.06]">
+                    <h3 class="text-sm font-bold text-ink-900 dark:text-white flex items-center gap-2">
+                        <i data-lucide="calendar-check" class="w-4 h-4 text-[#13DEB9]"></i>Asistencia Hoy
+                    </h3>
+                    <a href="{{ route('olimpo.asistencia') }}" class="text-xs font-semibold text-[#5D87FF]">Ver →</a>
                 </div>
-                <div class="px-6 py-4 overflow-y-auto max-h-[60vh] text-sm text-ink-700 leading-relaxed whitespace-pre-wrap" x-text="popContent"></div>
+                <div class="p-5">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="text-center">
+                            <p class="text-2xl font-bold text-emerald-500">{{ $kpis['asistencia_hoy'] }}</p>
+                            <p class="text-xs text-ink-500 dark:text-white/60 mt-1">Presentes</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-2xl font-bold text-amber-500">{{ $kpis['tardanzas_hoy'] }}</p>
+                            <p class="text-xs text-ink-500 dark:text-white/60 mt-1">Tardanzas</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-2xl font-bold text-red-500">{{ max(0, $kpis['ausentes_hoy']) }}</p>
+                            <p class="text-xs text-ink-500 dark:text-white/60 mt-1">Ausentes</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-2xl font-bold text-[#5D87FF]">{{ $kpis['personal_total'] }}</p>
+                            <p class="text-xs text-ink-500 dark:text-white/60 mt-1">Total</p>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
 
-    {{-- Quick Form Modal --}}
-    @if($showQuickForm)
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-        @keydown.escape.window="$wire.cancelQuickForm">
-        <div class="bg-white rounded-xl shadow-[0_8px_32px_rgb(0_0_0_/_0.12)] w-full max-w-lg max-h-[90vh] overflow-y-auto mx-4">
-            <div class="flex items-center justify-between px-6 py-4">
-                <h4 class="font-semibold text-ink-900 text-sm">Nueva Ocurrencia</h4>
-                <button wire:click="cancelQuickForm" class="p-1 text-ink-400 hover:text-ink-700 rounded-md hover:bg-ink-100">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
-            </div>
-            <div class="px-6 py-4 space-y-3">
-                <div>
-                    <label class="block text-xs font-semibold text-ink-500 uppercase tracking-wider mb-1">Persona</label>
-                    <input type="text" wire:model="qf_persona_nombre" list="qf-nombres-list" class="input-field w-full" placeholder="Escribe el nombre..." autocomplete="off" />
-                    <datalist id="qf-nombres-list">
-                        @foreach($nombres as $n)
-                            <option value="{{ $n }}">{{ $n }}</option>
+            {{-- Notifications --}}
+            <div class="bg-white dark:bg-[#1C1F2E] rounded-xl border border-[#e5eaef] dark:border-white/[0.06]">
+                <div class="flex items-center justify-between px-5 py-4 border-b border-[#e5eaef] dark:border-white/[0.06]">
+                    <h3 class="text-sm font-bold text-ink-900 dark:text-white flex items-center gap-2">
+                        <i data-lucide="bell" class="w-4 h-4 text-[#FFAE1F]"></i>Notificaciones
+                    </h3>
+                    <span class="text-[11px] font-semibold text-ink-400 dark:text-white/50">{{ count($notificaciones) }} pendientes</span>
+                </div>
+                <div class="p-5">
+                    @if(count($notificaciones) > 0)
+                        @foreach($notificaciones as $n)
+                        <div class="flex items-start gap-3 py-2.5 {{ !$loop->first ? 'border-t border-[#e5eaef] dark:border-white/[0.06]' : '!pt-0' }}">
+                            <span class="w-2 h-2 rounded-full mt-1.5 shrink-0 {{ $n['tipo'] === 'danger' ? 'bg-red-500' : ($n['tipo'] === 'warning' ? 'bg-amber-500' : 'bg-[#539BFF]') }}"></span>
+                            <div class="flex-1 min-w-0">
+                                <div class="text-sm font-semibold text-ink-900 dark:text-white">{{ $n['titulo'] }}</div>
+                                <div class="text-xs text-ink-500 dark:text-white/50 mt-0.5">{{ $n['desc'] }}</div>
+                            </div>
+                        </div>
                         @endforeach
-                    </datalist>
+                    @else
+                        <p class="text-sm text-ink-400 dark:text-white/40 text-center py-4">Sin notificaciones</p>
+                    @endif
                 </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-ink-500 uppercase tracking-wider mb-1">Turno</label>
-                        <select wire:model.live="qf_turno" class="input-field w-full">
-                            <option value="DÍA">Día</option>
-                            <option value="NOCHE">Noche</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-ink-500 uppercase tracking-wider mb-1">Tipo</label>
-                        <select wire:model="qf_tipo" class="input-field w-full">
-                            <option value="">Seleccionar...</option>
-                            @foreach($tipos as $t)
-                                <option value="{{ $t }}">{{ $t }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-ink-500 uppercase tracking-wider mb-1">Hora Ingreso</label>
-                        <input type="time" wire:model="qf_hora_ingreso" class="input-field w-full" />
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-ink-500 uppercase tracking-wider mb-1">Hora Salida</label>
-                        <input type="time" wire:model="qf_hora_salida" class="input-field w-full" />
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-ink-500 uppercase tracking-wider mb-1">Otro</label>
-                    <input type="text" wire:model="qf_otro" class="input-field w-full" />
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-ink-500 uppercase tracking-wider mb-1">Detalles</label>
-                    <textarea wire:model="qf_detalles" class="input-field w-full" rows="2"></textarea>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-ink-500 uppercase tracking-wider mb-1">Observación</label>
-                    <textarea wire:model="qf_observacion" class="input-field w-full" rows="2"></textarea>
-                </div>
-            </div>
-            <div class="flex items-center justify-between px-6 py-4 border-t border-ink-100">
-                <button wire:click="cancelQuickForm" class="btn btn-secondary btn-sm">Cancelar</button>
-                <button wire:click="saveQuickOcurrencia" class="btn btn-primary btn-sm">Guardar</button>
             </div>
         </div>
     </div>
-    @endif
+
+    {{-- Bottom 3-col Grid --}}
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
+        {{-- Calendar Widget --}}
+        <div class="bg-white dark:bg-[#1C1F2E] rounded-xl border border-[#e5eaef] dark:border-white/[0.06]">
+            <div class="flex items-center justify-between px-5 py-4 border-b border-[#e5eaef] dark:border-white/[0.06]">
+                <h3 class="text-sm font-bold text-ink-900 dark:text-white flex items-center gap-2">
+                    <i data-lucide="calendar" class="w-4 h-4 text-[#5D87FF]"></i>{{ now()->isoFormat('MMMM YYYY') }}
+                </h3>
+                <span class="text-[11px] text-ink-400 dark:text-white/50 font-label">{{ now()->isoFormat('dddd') }}</span>
+            </div>
+            <div class="p-5">
+                <div class="grid grid-cols-7 mb-1">
+                    <span class="text-center text-[10px] font-semibold text-ink-400 dark:text-white/50 py-1">Do</span>
+                    <span class="text-center text-[10px] font-semibold text-ink-400 dark:text-white/50 py-1">Lu</span>
+                    <span class="text-center text-[10px] font-semibold text-ink-400 dark:text-white/50 py-1">Ma</span>
+                    <span class="text-center text-[10px] font-semibold text-ink-400 dark:text-white/50 py-1">Mi</span>
+                    <span class="text-center text-[10px] font-semibold text-ink-400 dark:text-white/50 py-1">Ju</span>
+                    <span class="text-center text-[10px] font-semibold text-ink-400 dark:text-white/50 py-1">Vi</span>
+                    <span class="text-center text-[10px] font-semibold text-ink-400 dark:text-white/50 py-1">Sá</span>
+                </div>
+                <div class="grid grid-cols-7">
+                    @foreach($calendarioMes as $dia)
+                        @if($dia === null)
+                            <div class="text-center py-2 text-[11px] text-ink-200 dark:text-white/10"></div>
+                        @else
+                            @php
+                                $hoy = now()->day;
+                                $isToday = $dia === $hoy;
+                                $eventos = $calendarioEventos[$dia] ?? [];
+                            @endphp
+                            <div class="text-center py-2 text-[11px] {{ $isToday ? 'bg-[#5D87FF] text-white rounded-lg font-bold' : 'text-ink-700 dark:text-white/70' }}" title="{{ $dia }}/{{ now()->format('m') }}">
+                                <span>{{ $dia }}</span>
+                                @if(count($eventos) > 0)
+                                <div class="flex items-center justify-center gap-0.5 mt-0.5">
+                                    @foreach($eventos as $ev)
+                                        <span class="w-1 h-1 rounded-full {{ $ev['type'] === 'ocurrencia' ? 'bg-[#5D87FF]' : ($ev['type'] === 'asistencia' ? 'bg-[#13DEB9]' : 'bg-[#FFAE1F]') }}"></span>
+                                    @endforeach
+                                </div>
+                                @endif
+                            </div>
+                        @endif
+                    @endforeach
+                </div>
+                <div class="flex items-center gap-4 mt-3 text-[10px] text-ink-400 dark:text-white/50">
+                    <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#5D87FF]"></span>Ocurrencias</span>
+                    <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#13DEB9]"></span>Asistencia</span>
+                    <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#FFAE1F]"></span>Cumpleaños</span>
+                </div>
+            </div>
+        </div>
+
+        {{-- Occurrences by Type --}}
+        <div class="bg-white dark:bg-[#1C1F2E] rounded-xl border border-[#e5eaef] dark:border-white/[0.06]">
+            <div class="flex items-center justify-between px-5 py-4 border-b border-[#e5eaef] dark:border-white/[0.06]">
+                <h3 class="text-sm font-bold text-ink-900 dark:text-white flex items-center gap-2">
+                    <i data-lucide="trending-up" class="w-4 h-4 text-[#13DEB9]"></i>Ocurrencias x Tipo
+                </h3>
+            </div>
+            <div class="p-5">
+                @if($chartTipoData)
+                    @foreach($chartTipoData['labels'] as $i => $label)
+                    <div class="flex items-center justify-between py-2 {{ !$loop->first ? 'border-t border-[#e5eaef] dark:border-white/[0.06]' : '' }}">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full" style="background: {{ $chartTipoData['colors'][$i] ?? '#5D87FF' }}"></span>
+                            <span class="text-sm text-ink-700 dark:text-white/70">{{ $label }}</span>
+                        </div>
+                        <span class="text-sm font-semibold text-ink-900 dark:text-white">{{ $chartTipoData['data'][$i] ?? 0 }}</span>
+                    </div>
+                    @endforeach
+                    <div class="flex items-center justify-between py-2 mt-2 border-t-2 border-[#e5eaef] dark:border-white/[0.06]">
+                        <span class="text-sm font-bold text-ink-900 dark:text-white">Total</span>
+                        <span class="text-sm font-bold text-[#5D87FF]">{{ array_sum($chartTipoData['data']) }}</span>
+                    </div>
+                @else
+                    <p class="text-sm text-ink-400 dark:text-white/40 text-center py-6">Sin datos este mes</p>
+                @endif
+            </div>
+        </div>
+
+        {{-- Personnel Online --}}
+        <div class="bg-white dark:bg-[#1C1F2E] rounded-xl border border-[#e5eaef] dark:border-white/[0.06]">
+            <div class="flex items-center justify-between px-5 py-4 border-b border-[#e5eaef] dark:border-white/[0.06]">
+                <h3 class="text-sm font-bold text-ink-900 dark:text-white flex items-center gap-2">
+                    <i data-lucide="users" class="w-4 h-4 text-[#5D87FF]"></i>Personal en Línea
+                </h3>
+                <span class="text-[11px] text-ink-400 dark:text-white/50 font-semibold">
+                    {{ collect($personalOnline)->where('online', true)->count() }} activos
+                </span>
+            </div>
+            <div class="p-5">
+                @if(count($personalOnline) > 0)
+                    @foreach(array_slice($personalOnline, 0, 6) as $s)
+                    <div class="flex items-center gap-3 py-2 {{ !$loop->first ? 'border-t border-[#e5eaef] dark:border-white/[0.06]' : '' }}">
+                        <span class="w-2 h-2 rounded-full {{ $s['online'] ? 'bg-emerald-500' : 'bg-ink-300 dark:bg-white/20' }}"></span>
+                        <div class="flex-1 min-w-0">
+                            <span class="text-sm font-semibold {{ $s['online'] ? 'text-emerald-600 dark:text-emerald-400' : 'text-ink-400 dark:text-white/50' }}">
+                                {{ $s['name'] }}
+                                @if($s['status'])
+                                <span class="text-[10px] text-ink-400 dark:text-white/50 font-normal ml-1">{{ $s['status'] }}</span>
+                                @endif
+                            </span>
+                        </div>
+                    </div>
+                    @endforeach
+                @else
+                    <p class="text-sm text-ink-400 dark:text-white/40 text-center py-6">Sin personal activo</p>
+                @endif
+            </div>
+        </div>
+    </div>
+
+    {{-- Charts Row --}}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div class="bg-white dark:bg-[#1C1F2E] rounded-xl border border-[#e5eaef] dark:border-white/[0.06]">
+            <div class="flex items-center justify-between px-5 py-4 border-b border-[#e5eaef] dark:border-white/[0.06]">
+                <h3 class="text-sm font-bold text-ink-900 dark:text-white flex items-center gap-2">
+                    <i data-lucide="pie-chart" class="w-4 h-4 text-[#5D87FF]"></i>Ocurrencias por Tipo
+                </h3>
+            </div>
+            <div class="p-5">
+                @if($chartTipoData)
+                <div style="height: 220px; max-width: 320px; margin: 0 auto;">
+                    <canvas
+                        x-data="{
+                            init() {
+                                new Chart(this.$el, {
+                                    type: 'doughnut',
+                                    data: {
+                                        labels: @js($chartTipoData['labels']),
+                                        datasets: [{
+                                            data: @js($chartTipoData['data']),
+                                            backgroundColor: @js($chartTipoData['colors']),
+                                            borderWidth: 3,
+                                            borderColor: document.documentElement.classList.contains('dark') ? '#1C1F2E' : '#fff',
+                                            hoverOffset: 8
+                                        }]
+                                    },
+                                    options: {
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        cutout: '72%',
+                                        plugins: {
+                                            legend: {
+                                                position: 'bottom',
+                                                labels: { color: '#64748b', font: { size: 11, family: 'DM Sans' }, boxWidth: 12, padding: 12, usePointStyle: true }
+                                            }
+                                        }
+                                    }
+                                });
+                            }
+                        }"
+                    ></canvas>
+                </div>
+                @else
+                <div class="py-8 text-center">
+                    <div class="w-12 h-12 rounded-xl bg-[#f4f6f9] dark:bg-white/[0.06] flex items-center justify-center mx-auto mb-3">
+                        <i data-lucide="chart-pie" class="w-6 h-6 text-ink-400 dark:text-white/40"></i>
+                    </div>
+                    <p class="text-sm font-medium text-ink-500 dark:text-white/50">Sin datos este mes</p>
+                </div>
+                @endif
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-[#1C1F2E] rounded-xl border border-[#e5eaef] dark:border-white/[0.06]">
+            <div class="flex items-center justify-between px-5 py-4 border-b border-[#e5eaef] dark:border-white/[0.06]">
+                <h3 class="text-sm font-bold text-ink-900 dark:text-white flex items-center gap-2">
+                    <i data-lucide="bar-chart-3" class="w-4 h-4 text-[#5D87FF]"></i>Tendencia Semanal
+                </h3>
+            </div>
+            <div class="p-5">
+                <div style="height: 220px;">
+                    <canvas
+                        x-data="{
+                            init() {
+                                new Chart(this.$el, {
+                                    type: 'bar',
+                                    data: {
+                                        labels: @js(collect($chartSemanalData)->pluck('label')),
+                                        datasets: [{
+                                            label: 'Ocurrencias',
+                                            data: @js(collect($chartSemanalData)->pluck('total')),
+                                            backgroundColor: ['#5D87FF', '#49BEFF', '#5D87FF', '#49BEFF', '#5D87FF', '#49BEFF', '#5D87FF'],
+                                            borderRadius: 6,
+                                            borderSkipped: false
+                                        }]
+                                    },
+                                    options: {
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        plugins: { legend: { display: false } },
+                                        scales: {
+                                            y: {
+                                                ticks: { color: '#94a3b8', stepSize: 1, font: { size: 10 } },
+                                                grid: { color: document.documentElement.classList.contains('dark') ? 'rgba(255,255,255,.03)' : '#f1f5f9', drawTicks: false }
+                                            },
+                                            x: {
+                                                ticks: { color: '#94a3b8', font: { size: 9, family: 'DM Sans' } },
+                                                grid: { display: false }
+                                            }
+                                        }
+                                    }
+                                });
+                            }
+                        }"
+                    ></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @push('scripts')
+    <script>
+        document.addEventListener('livewire:init', () => {
+            Livewire.on('refreshDashboard', () => {
+                Livewire.dispatch('$refresh');
+            });
+        });
+    </script>
+    @endpush
 </div>

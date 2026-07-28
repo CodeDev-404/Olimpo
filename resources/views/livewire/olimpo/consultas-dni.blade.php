@@ -3,12 +3,17 @@
         <div class="card-body">
             <div class="mb-5">
                 <div class="flex items-center gap-3">
-                    <span class="text-sm font-semibold text-ink-600 shrink-0">Búsqueda por:</span>
-                    <select wire:change="cambiarModo($event.target.value)"
-                        class="input-field max-w-[160px]">
-                        <option value="simple" {{ $modo === 'simple' ? 'selected' : '' }}>Simple</option>
-                        <option value="premium" {{ $modo === 'premium' ? 'selected' : '' }}>Premium</option>
-                    </select>
+                    <span class="text-sm font-semibold text-ink-600 dark:text-ink-400 shrink-0">Búsqueda por:</span>
+                    <div class="flex rounded-lg border border-[#e5eaef] dark:border-white/[0.06] overflow-hidden shrink-0" role="tablist">
+                        <button type="button" wire:click="cambiarModo('simple')"
+                            class="px-4 py-2 text-sm font-medium transition-all {{ $modo === 'simple' ? 'bg-[#1C1F2E] text-white' : 'bg-white dark:bg-[#1C1F2E] text-ink-600 dark:text-white/60 hover:bg-ink-50 dark:hover:bg-white/[0.06]' }}">
+                            Simple
+                        </button>
+                        <button type="button" wire:click="cambiarModo('premium')"
+                            class="px-4 py-2 text-sm font-medium transition-all {{ $modo === 'premium' ? 'bg-[#1C1F2E] text-white' : 'bg-white dark:bg-[#1C1F2E] text-ink-600 dark:text-white/60 hover:bg-ink-50 dark:hover:bg-white/[0.06]' }}">
+                            Premium
+                        </button>
+                    </div>
 
                     @if($modo === 'premium')
                     <select wire:change="seleccionarHerramienta($event.target.value)"
@@ -38,13 +43,13 @@
 
             <div class="flex items-center gap-3">
                 @if($isSimple)
-                <div class="flex rounded-md border border-ink-200 overflow-hidden shrink-0">
+                <div class="flex rounded-lg border border-[#e5eaef] dark:border-white/[0.06] overflow-hidden shrink-0">
                     <button type="button" wire:click="$set('tipo', 'dni')"
-                        class="px-4 py-2 text-sm font-medium {{ $tipo === 'dni' ? 'bg-ink-800 text-white' : 'bg-white text-ink-600 hover:bg-ink-50' }}">
+                        class="px-4 py-2 text-sm font-medium {{ $tipo === 'dni' ? 'bg-[#1C1F2E] text-white' : 'bg-white dark:bg-[#1C1F2E] text-ink-600 dark:text-white/60 hover:bg-ink-50 dark:hover:bg-white/[0.06]' }}">
                         DNI
                     </button>
                     <button type="button" wire:click="$set('tipo', 'ruc')"
-                        class="px-4 py-2 text-sm font-medium {{ $tipo === 'ruc' ? 'bg-ink-800 text-white' : 'bg-white text-ink-600 hover:bg-ink-50' }}">
+                        class="px-4 py-2 text-sm font-medium {{ $tipo === 'ruc' ? 'bg-[#1C1F2E] text-white' : 'bg-white dark:bg-[#1C1F2E] text-ink-600 dark:text-white/60 hover:bg-ink-50 dark:hover:bg-white/[0.06]' }}">
                         RUC
                     </button>
                 </div>
@@ -56,9 +61,7 @@
                     class="input-field flex-1" />
                 <button type="button" wire:click="consultar" wire:loading.attr="disabled"
                     class="btn btn-primary">
-                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                    </svg>
+                    <i data-lucide="search" class="w-4 h-4 shrink-0"></i>
                     Consultar
                 </button>
             </div>
@@ -74,12 +77,12 @@
          x-transition.opacity.duration.200ms
          class="fixed inset-0 z-50 flex items-center justify-center bg-ink-900/60 p-4"
          @keydown.escape.window="open = false">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden"
+        <div class="bg-white dark:bg-[#1C1F2E] rounded-xl shadow-lg w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden"
              @click.outside="open = false">
             {{-- Header --}}
-            <div class="flex items-center justify-between px-6 py-4 border-b border-ink-200 shrink-0">
-                <h3 class="text-base font-bold text-ink-900 tracking-wide">{{ $modalTitle }}</h3>
-                <button @click="open = false" class="text-ink-400 hover:text-ink-600 text-2xl leading-none w-8 h-8 flex items-center justify-center rounded hover:bg-ink-100">&times;</button>
+            <div class="flex items-center justify-between px-6 py-4 border-b border-[#e5eaef] dark:border-white/[0.06] shrink-0">
+                <h3 class="text-base font-bold text-ink-900 dark:text-white tracking-wide font-display">{{ $modalTitle }}</h3>
+                <button @click="open = false" class="text-ink-400 hover:text-ink-600 dark:text-white/60 text-2xl leading-none w-8 h-8 flex items-center justify-center rounded hover:bg-ink-100 dark:hover:bg-white/[0.06]">&times;</button>
             </div>
             {{-- Body --}}
             <div class="flex-1 overflow-y-auto p-6">
@@ -119,16 +122,16 @@
                             @if(!empty($resultado['foto']) || !empty($resultado['firma']))
                             <div class="flex gap-4 mt-4 lg:hidden">
                                 @if(!empty($resultado['foto']))
-                                <div class="flex-1 border border-ink-200 rounded-lg overflow-hidden">
-                                    <div class="bg-ink-50 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink-400">Foto</div>
+                                <div class="flex-1 border border-[#e5eaef] dark:border-white/[0.06] rounded-lg overflow-hidden">
+                                    <div class="bg-[#f4f6f9] dark:bg-white/[0.06] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink-400">Foto</div>
                                     <div class="p-2">
                                         <img src="data:image/jpeg;base64,{{ $resultado['foto'] }}" alt="Foto" class="w-full h-auto">
                                     </div>
                                 </div>
                                 @endif
                                 @if(!empty($resultado['firma']))
-                                <div class="flex-1 border border-ink-200 rounded-lg overflow-hidden">
-                                    <div class="bg-ink-50 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink-400">Firma</div>
+                                <div class="flex-1 border border-[#e5eaef] dark:border-white/[0.06] rounded-lg overflow-hidden">
+                                    <div class="bg-[#f4f6f9] dark:bg-white/[0.06] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink-400">Firma</div>
                                     <div class="p-2">
                                         <img src="data:image/jpeg;base64,{{ $resultado['firma'] }}" alt="Firma" class="w-full h-auto">
                                     </div>
@@ -140,16 +143,16 @@
                         @if(!empty($resultado['foto']) || !empty($resultado['firma']))
                         <aside class="hidden lg:flex lg:flex-col gap-4 w-48 shrink-0">
                             @if(!empty($resultado['foto']))
-                            <div class="border border-ink-200 rounded-lg overflow-hidden">
-                                <div class="bg-ink-50 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink-400">Foto</div>
+                            <div class="border border-[#e5eaef] dark:border-white/[0.06] rounded-lg overflow-hidden">
+                                <div class="bg-[#f4f6f9] dark:bg-white/[0.06] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink-400">Foto</div>
                                 <div class="p-2">
                                     <img src="data:image/jpeg;base64,{{ $resultado['foto'] }}" alt="Foto" class="w-full h-auto">
                                 </div>
                             </div>
                             @endif
                             @if(!empty($resultado['firma']))
-                            <div class="border border-ink-200 rounded-lg overflow-hidden">
-                                <div class="bg-ink-50 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink-400">Firma</div>
+                            <div class="border border-[#e5eaef] dark:border-white/[0.06] rounded-lg overflow-hidden">
+                                <div class="bg-[#f4f6f9] dark:bg-white/[0.06] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink-400">Firma</div>
                                 <div class="p-2">
                                     <img src="data:image/jpeg;base64,{{ $resultado['firma'] }}" alt="Firma" class="w-full h-auto">
                                 </div>
@@ -195,7 +198,7 @@
 
     <div class="card">
         <div class="card-header">
-            <span class="font-semibold text-sm text-ink-900">Historial de Consultas</span>
+            <span class="font-semibold text-sm text-ink-900 dark:text-white font-display">Historial de Consultas</span>
             @if(count($historial) > 0)
                 <button type="button" wire:click="limpiarHistorial" wire:confirm="¿Eliminar todo el historial?" class="btn btn-danger btn-xs">
                     Limpiar historial
@@ -220,7 +223,7 @@
                             <td class="font-mono text-ink-400 text-xs">{{ $i + 1 }}</td>
                             <td>
                                 @if(!empty($h['tipo']))
-                                <span class="badge text-xs {{ $h['tipo'] === 'DNI' || $h['tipo'] === 'SUNAT' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700' }}">
+                                <span class="badge text-xs {{ $h['tipo'] === 'DNI' || $h['tipo'] === 'SUNAT' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' }}">
                                     {{ $h['tipo'] }}
                                 </span>
                                 @else
@@ -231,14 +234,20 @@
                             <td class="font-medium">@if(!empty($h['nombre_mostrar'])){{ $h['nombre_mostrar'] }}@else<span class="text-ink-300">—</span>@endif</td>
                             <td class="text-xs text-ink-400">@if(!empty($h['created_at'])){{ \Carbon\Carbon::parse($h['created_at'])->format('d/m/Y H:i') }}@else<span class="text-ink-300">—</span>@endif</td>
                             <td>
-                                <svg class="w-4 h-4 text-ink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                </svg>
+                                <i data-lucide="circle" class="w-4 h-4 text-ink-400"></i>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-3 py-12 text-center text-ink-400">No hay consultas registradas</td>
+                            <td colspan="6" class="px-3 py-16 text-center">
+                                <div class="empty-state">
+                                    <div class="empty-state-icon">
+                                        <i data-lucide="search" class="w-8 h-8 text-ink-300 dark:text-white/20"></i>
+                                    </div>
+                                    <p class="empty-state-title">No hay consultas registradas</p>
+                                    <p class="empty-state-desc">Las consultas aparecerán aquí una vez que se realicen.</p>
+                                </div>
+                            </td>
                         </tr>
                     @endforelse
                 </tbody>

@@ -13,8 +13,8 @@ use Illuminate\Support\Facades\Hash;
 
 class Configuracion extends Component
 {
-    public $activeTab = 'tipos';
     public $isAuth = false;
+    public $activeTab = 'tipos';
 
     // Tipo form
     public $tipoId = null;
@@ -61,9 +61,14 @@ class Configuracion extends Component
     public $camionetas = [];
     public $usuarios = [];
 
-    protected $listeners = ['panelChanged' => 'refreshData'];
+    protected $listeners = [];
 
     public $niveles = ['Leve', 'Moderado', 'Grave', 'Crítico'];
+
+    public function setTab($tab)
+    {
+        $this->activeTab = $tab;
+    }
 
     public function mount()
     {
@@ -95,8 +100,6 @@ class Configuracion extends Component
         $this->camionetas = Camioneta::orderBy('placa')->get()->toArray();
         $this->usuarios = User::orderBy('name')->get()->toArray();
     }
-
-    public function setTab($tab) { $this->activeTab = $tab; }
 
     public function saveSettings()
     {

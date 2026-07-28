@@ -6,7 +6,7 @@ use Livewire\Component;
 
 class RegistroPalm extends Component
 {
-    protected $listeners = ['panelChanged' => '$refresh'];
+    protected $listeners = [];
 
     public function render()
     {

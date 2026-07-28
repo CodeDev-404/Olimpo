@@ -3,12 +3,12 @@
 namespace App\Livewire\Olimpo;
 
 use Livewire\Component;
+use Livewire\Attributes\Computed;
 use App\Models\Personal as PersonalModel;
 use App\Models\Cargo;
 
 class Personal extends Component
 {
-    public $personal = [];
     public $cargos = [];
     public $selectedId = null;
     public $showForm = false;
@@ -34,7 +34,7 @@ class Personal extends Component
         'kmente' => 'Premium',
     ];
 
-    protected $listeners = ['panelChanged' => 'refreshData', 'importData' => 'handleImport'];
+    protected $listeners = ['importData' => 'handleImport'];
 
     public function mount()
     {
@@ -48,6 +48,12 @@ class Personal extends Component
 
     public function refreshData()
     {
+        $this->cargos = Cargo::orderBy('nombre')->get(['id', 'nombre'])->toArray();
+    }
+
+    #[Computed]
+    public function getPersonalProperty()
+    {
         $deptos = [
             'PRINCIPAL' => 1, 'COMISIONES' => 2,
             'COORDINADOR' => 3, 'SEGURIDAD' => 4,
@@ -55,21 +61,40 @@ class Personal extends Component
             'TORREON' => 6, 'TORREON SUPLENTE' => 6,
         ];
 
-        $query = PersonalModel::with('cargoRel');
+        $grupoPri = ['CHOFERES' => 1, 'OLIMPO' => 2, 'COCINA' => 3, 'MANTENIMIENTO' => 4, 'TORREÓN' => 5];
+
+        $query = PersonalModel::with('cargoRel:id,nombre,grupo,orden')
+            ->select([
+                'id', 'nombre', 'segundo_nombre', 'apellido_paterno', 'apellido_materno',
+                'alias', 'cargo', 'cargo_id', 'departamento', 'documento',
+                'telefono', 'email', 'fecha_nacimiento', 'estado',
+            ]);
 
         if ($this->search) {
             $q = $this->search;
             $query->where(function ($qry) use ($q) {
                 $qry->where('nombre', 'like', "%{$q}%")
+                    ->orWhere('segundo_nombre', 'like', "%{$q}%")
+                    ->orWhere('apellido_paterno', 'like', "%{$q}%")
+                    ->orWhere('apellido_materno', 'like', "%{$q}%")
+                    ->orWhere('alias', 'like', "%{$q}%")
                     ->orWhere('cargo', 'like', "%{$q}%")
                     ->orWhere('departamento', 'like', "%{$q}%")
-                    ->orWhere('documento', 'like', "%{$q}%");
+                    ->orWhere('documento', 'like', "%{$q}%")
+                    ->orWhere('telefono', 'like', "%{$q}%")
+                    ->orWhere('email', 'like', "%{$q}%");
             });
         }
 
-        $this->personal = $query->get()->toArray();
+        $personal = $query->get()->toArray();
 
-        foreach ($this->personal as &$p) {
+        foreach ($personal as &$p) {
+            $p['nombre'] = t($p['nombre']);
+            $p['segundo_nombre'] = t($p['segundo_nombre']);
+            $p['apellido_paterno'] = t($p['apellido_paterno']);
+            $p['apellido_materno'] = t($p['apellido_materno']);
+            $p['alias'] = t($p['alias']);
+
             $fn = $p['fecha_nacimiento'];
             if ($fn) {
                 $date = \Carbon\Carbon::parse($fn);
@@ -79,21 +104,21 @@ class Personal extends Component
                 $p['edad'] = null;
                 $p['cumpleaños_format'] = null;
             }
-        }
-        unset($p);
 
-        $grupoPri = ['CHOFERES' => 1, 'OLIMPO' => 2, 'COCINA' => 3, 'MANTENIMIENTO' => 4, 'TORREÓN' => 5];
-
-        foreach ($this->personal as &$p) {
             $dep = $p['departamento'] ?? '';
             $p['grupo_rol'] = in_array($dep, ['TORREON', 'TORREON SUPLENTE'])
                 ? 'TORREÓN'
                 : ($p['cargo_rel']['grupo'] ?? 'OLIMPO');
             $p['orden_rol'] = $p['cargo_rel']['orden'] ?? 0;
+
+            unset($p['cargo_rel'], $p['created_at'], $p['updated_at']);
+            unset($p['fecha_nacimiento']);
+            unset($p['segundo_nombre'], $p['apellido_paterno'], $p['apellido_materno']);
+            unset($p['email'], $p['cargo_id']);
         }
         unset($p);
 
-        usort($this->personal, function ($a, $b) use ($deptos, $grupoPri) {
+        usort($personal, function ($a, $b) use ($deptos, $grupoPri) {
             $rolA = $grupoPri[$a['grupo_rol']] ?? 99;
             $rolB = $grupoPri[$b['grupo_rol']] ?? 99;
             if ($rolA !== $rolB) return $rolA <=> $rolB;
@@ -109,8 +134,7 @@ class Personal extends Component
             return strcasecmp($a['nombre'], $b['nombre']);
         });
 
-        $this->personal = array_values($this->personal);
-        $this->cargos = Cargo::orderBy('nombre')->get()->toArray();
+        return array_values($personal);
     }
 
     public function selectPersona($id)
@@ -185,6 +209,7 @@ class Personal extends Component
         }
 
         $this->showForm = false;
+        $this->dispatch('close-form-modal');
         $this->selectedId = null;
         $this->refreshData();
         $this->dispatch('notify', message: 'Personal guardado.', type: 'success');

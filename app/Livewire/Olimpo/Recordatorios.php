@@ -8,7 +8,7 @@ use Carbon\Carbon;
 
 class Recordatorios extends Component
 {
-    protected $listeners = ['panelChanged' => '$refresh'];
+    protected $listeners = [];
 
     public function render()
     {
@@ -17,21 +17,31 @@ class Recordatorios extends Component
         $todayDay = (int) now()->format('d');
         $todayMd = ($todayMonth * 100) + $todayDay;
 
-        $cumpleanos = Cumpleano::where('recordatorio_activo', true)->get()->map(function ($c) use ($today, $todayMd, $todayMonth, $todayDay) {
+        $cumpleanos = Cumpleano::where('recordatorio_activo', true)->get();
+
+        $dnis = $cumpleanos->pluck('dni')->filter()->values()->toArray();
+        $aliases = $dnis ? \App\Models\Personal::whereIn('documento', $dnis)
+            ->pluck('alias', 'documento')
+            ->toArray() : [];
+
+        $cumpleanos = $cumpleanos->map(function ($c) use ($today, $todayMd, $todayMonth, $todayDay, $aliases) {
             $dayOfWeek = $this->dayOfWeekForYear($c->fecha);
             $fechaLarga = $this->fechaLarga($c->fecha);
             $proximidad = $this->proximidad($c->fecha, $todayMonth, $todayDay);
             $esHoy = $c->fecha === $today;
 
+            $alias = $c->dni ? ($aliases[$c->dni] ?? null) : null;
+
             return [
                 'id' => $c->id,
                 'fecha' => $c->fecha,
                 'fecha_larga' => $fechaLarga,
-                'nombre' => $c->nombre,
-                'detalles' => $c->detalles,
-                'parentesco' => $c->parentesco ?? '',
+                'nombre' => t($c->nombre),
+                'detalles' => t($c->detalles),
+                'alias' => t($alias),
+                'parentesco' => t($c->parentesco ?? ''),
                 'recordatorio_hora' => $c->recordatorio_hora ?? '07:30:00',
-                'dia' => $dayOfWeek,
+                'dia' => t($dayOfWeek),
                 'proximidad' => $proximidad,
                 'es_hoy' => $esHoy,
             ];

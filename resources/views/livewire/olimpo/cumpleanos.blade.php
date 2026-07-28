@@ -86,7 +86,11 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" wire:click="cancel" class="btn btn-secondary">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Guardar</button>
+                    <button type="submit" class="btn btn-primary" wire:loading.attr="disabled">
+                        <svg wire:loading wire:target="save" class="w-4 h-4 mr-1.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                        <span wire:loading.remove wire:target="save">Guardar</span>
+                        <span wire:loading wire:target="save">Guardando...</span>
+                    </button>
                 </div>
             </form>
         </div>
@@ -94,11 +98,11 @@
     @endif
 
     @if(!empty($cumpleanosHoy))
-    <div class="mb-5 rounded-xl border border-ember-300 bg-gradient-to-br from-ember-50 to-amber-50 px-5 py-4 shadow-[0_1px_3px_0_rgb(0_0_0_/_0.04)]">
+    <div class="mb-5 rounded-xl border border-amber-200/40 dark:border-amber-500/10 bg-amber-50 dark:bg-amber-500/5 px-5 py-4">
         <div class="flex items-start gap-4">
-            <div class="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-ember-200 text-xl">🎂</div>
+            <div class="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-amber-200/80 text-xl">🎂</div>
             <div class="flex-1 min-w-0">
-                <h3 class="text-[11px] font-bold text-ember-700 uppercase tracking-widest mb-2">Cumpleaños de hoy</h3>
+                <h3 class="text-[11px] font-bold text-amber-700 dark:text-amber-300 uppercase tracking-widest mb-2">Cumpleaños de hoy</h3>
                 <div class="space-y-1.5">
                     @foreach($cumpleanosHoy as $c)
                     <div class="flex items-center gap-2">
@@ -124,7 +128,7 @@
                 <button wire:click="nuevo" class="btn btn-primary btn-sm">+ Agregar</button>
                 <button wire:click="editar" class="btn btn-secondary btn-sm">Editar</button>
                 <button wire:click="eliminar" class="btn btn-danger btn-sm">Eliminar</button>
-                <button wire:click="toggleSelectMode" class="btn btn-sm {{ $selectMode ? 'btn-warning' : 'btn-outline border-ink-200' }}">
+                <button wire:click="toggleSelectMode" class="btn btn-sm {{ $selectMode ? 'btn-warning' : 'btn-outline border-[#e5eaef]' }}">
                     {{ $selectMode ? 'Cancelar selección' : 'Seleccionar' }}
                 </button>
                 @if($selectMode)
@@ -132,11 +136,11 @@
                         Eliminar seleccionados ({{ count($selectedIds) }})
                     </button>
                 @endif
-                <button wire:click="$dispatch('openImportModal')" class="btn btn-outline btn-sm border-ink-200 text-ink-600 hover:bg-ink-50">
+                <button wire:click="$dispatch('openImportModal')" class="btn btn-outline btn-sm border-[#e5eaef] text-ink-600 hover:bg-ink-50">
                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
                     Importar
                 </button>
-                <button @click="testNotification()" class="btn btn-outline btn-sm border-ink-200 text-ink-600 hover:bg-ink-50" title="Probar notificación y sonido">
+                <button @click="testNotification()" class="btn btn-outline btn-sm border-[#e5eaef] text-ink-600 hover:bg-ink-50" title="Probar notificación y sonido">
                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.035-.586 1.414L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
                     Probar
                 </button>
@@ -148,7 +152,7 @@
                             @if($selectMode)
                             <th class="w-10">
                                 <input type="checkbox" wire:click="toggleSelectAll"
-                                    {{ count($selectedIds) === count($cumpleanos) && count($cumpleanos) > 0 ? 'checked' : '' }}>
+                                    {{ count($selectedIds) === count($this->cumpleanos) && count($this->cumpleanos) > 0 ? 'checked' : '' }}>
                             </th>
                             @endif
                             <th>#</th>
@@ -161,7 +165,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($cumpleanos as $i => $c)
+                        @forelse($this->cumpleanos as $i => $c)
                             @php $proximo = !$c['es_hoy'] && ($c['proximidad'] ?? 99) <= 7; @endphp
                             <tr wire:click="selectCumpleano({{ $c['id'] }})" @if($selectMode) @click.stop @endif
                                 class="cursor-pointer transition-colors {{ $c['es_hoy'] ? 'bg-amber-50 shadow-[inset_3px_0_0_0_#f59e0b]' : ($proximo ? 'bg-amber-50/40' : '') }} {{ $selectMode && in_array($c['id'], $selectedIds) ? 'bg-ink-50' : ($selectedId === $c['id'] ? 'bg-ink-50' : '') }}">
@@ -202,10 +206,13 @@
                         </tr>
                         @empty
                             <tr>
-                                <td colspan="{{ $selectMode ? 8 : 7 }}" class="px-3 py-12 text-center">
-                                    <div class="flex flex-col items-center gap-2 text-ink-400">
-                                        <span class="text-2xl">📋</span>
-                                        <span class="text-sm">No hay cumpleaños registrados</span>
+                                <td colspan="{{ $selectMode ? 8 : 7 }}" class="px-3 py-16 text-center">
+                                    <div class="empty-state">
+                                        <div class="empty-state-icon">
+                                            <i data-lucide="cake" class="w-8 h-8 text-ink-300 dark:text-white/20"></i>
+                                        </div>
+                                        <p class="empty-state-title">No hay cumpleaños registrados</p>
+                                        <p class="empty-state-desc">Los cumpleaños aparecerán aquí una vez que se registren.</p>
                                     </div>
                                 </td>
                             </tr>

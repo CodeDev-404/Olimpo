@@ -1,11 +1,25 @@
-<div>
+<div x-data="{ filtersOpen: true }" x-cloak>
     <div class="card mb-5">
         <div class="card-body">
             <div class="flex flex-wrap items-center gap-3">
-                <span class="text-[11px] text-ink-500 font-semibold uppercase tracking-wider">Mes:</span>
-                <input type="month" wire:model.live="filterMes" class="input-field">
-                <button wire:click="guardarMes" class="btn btn-success">Guardar Mes</button>
-                <button wire:click="$dispatch('openImportModal')" class="btn btn-outline text-blue-600 border-blue-300 hover:bg-blue-50">
+                <button
+                    class="flex items-center gap-1.5 px-3 h-9 rounded-lg border border-ink-200 dark:border-ink-600 bg-white dark:bg-ink-800/50 text-ink-400 dark:text-ink-500 hover:border-[#5D87FF] dark:hover:border-[#5D87FF] hover:text-[#5D87FF] dark:hover:text-[#5D87FF] transition-all duration-150 shrink-0"
+                    :class="{ 'border-[#5D87FF] dark:border-[#5D87FF] text-[#5D87FF] dark:text-[#5D87FF] bg-[#5D87FF]/10 dark:bg-[#5D87FF]/20': filtersOpen }"
+                    @click="filtersOpen = !filtersOpen"
+                    :title="filtersOpen ? 'Cerrar filtros' : 'Abrir filtros'">
+                    <svg x-show="!filtersOpen" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21v-7"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 6V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><path d="M2 14h4"/><path d="M10 8h4"/><path d="M18 16h4"/></svg>
+                    <span x-show="!filtersOpen" class="text-xs font-medium">Filtrar</span>
+                    <svg x-show="filtersOpen" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    <span x-show="filtersOpen" class="text-xs font-medium">Cerrar</span>
+                </button>
+
+                <div x-show="filtersOpen" class="flex items-center gap-3 filter-slide-in">
+                    <span class="text-[11px] text-ink-500 font-semibold uppercase tracking-wider">Mes:</span>
+                    <input type="month" wire:model.live="filterMes" class="input-field h-9">
+                    <button wire:click="guardarMes" class="btn btn-success btn-sm h-9">Guardar Mes</button>
+                </div>
+
+                <button wire:click="$dispatch('openImportModal')" class="btn btn-outline btn-sm h-9 text-blue-600 border-blue-300 hover:bg-blue-50">
                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
                     Importar
                 </button>
@@ -18,24 +32,25 @@
                     <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-ember-400"></span><span class="text-ink-500">Falta</span></span>
                     <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-red-500"></span><span class="text-ink-500">Descanso</span></span>
                 </div>
-                <span class="text-xs text-ink-400 ml-auto">{{ count($personal) }} personas — {{ $dias }} días</span>
+                <span class="text-xs text-ink-400 ml-auto">{{ count($this->personal) }} personas — {{ $dias }} días</span>
             </div>
         </div>
     </div>
 
     <div class="card overflow-x-auto">
-        <div class="card-body p-0" style="min-width: {{ $nameColumnWidth + $dias * 48 }}px">
+        <div class="card-body p-0" style="min-width: {{ 40 + $nameColumnWidth + $dias * 48 }}px">
             <table class="w-full text-xs">
                 <thead>
                     <tr class="bg-ink-50 text-ink-600">
-                        <th class="px-2 py-2.5 text-left sticky left-0 bg-ink-50 z-10 font-semibold text-[11px] uppercase tracking-wider" style="width:{{ $nameColumnWidth }}px; min-width:{{ $nameColumnWidth }}px">Nombre</th>
+                        <th class="px-1 py-2.5 text-center sticky left-0 bg-ink-50 z-20 font-semibold text-[11px] uppercase tracking-wider" style="width:40px; min-width:40px">#</th>
+                        <th class="px-2 py-2.5 text-left sticky left-[40px] bg-ink-50 z-10 font-semibold text-[11px] uppercase tracking-wider" style="width:{{ $nameColumnWidth }}px; min-width:{{ $nameColumnWidth }}px">Nombre</th>
                         @for($d = 1; $d <= $dias; $d++)
                             <th class="px-0 py-2.5 text-center font-semibold text-ink-500 text-[11px]" style="width:48px; min-width:48px">{{ str_pad($d,2,'0',STR_PAD_LEFT) }}</th>
                         @endfor
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($personal as $idx => $p)
+                    @foreach($this->personal as $idx => $p)
                         @php
                             $showHeader = !isset($prevRol) || $prevRol !== $p['grupo_rol'];
                             $prevRol = $p['grupo_rol'];
@@ -52,13 +67,14 @@
                         @endphp
                         @if($showHeader)
                             <tr class="{{ $h['class'] }}">
-                                <td colspan="{{ 1 + $dias }}" class="px-3 py-2 font-semibold text-xs uppercase tracking-wider">
+                                <td colspan="{{ 2 + $dias }}" class="px-3 py-2 font-semibold text-xs uppercase tracking-wider">
                                     {{ $h['label'] }}
                                 </td>
                             </tr>
                         @endif
                         <tr class="border-t border-ink-100">
-                            <td class="px-2 py-1.5 text-sm sticky left-0 {{ $bg }} font-medium whitespace-nowrap" style="width:{{ $nameColumnWidth }}px; min-width:{{ $nameColumnWidth }}px">
+                            <td class="px-1 py-1.5 text-xs text-ink-400 text-center sticky left-0 {{ $bg }} z-20" style="width:40px; min-width:40px">{{ $idx + 1 }}</td>
+                            <td class="px-2 py-1.5 text-sm sticky left-[40px] {{ $bg }} font-medium whitespace-nowrap" style="width:{{ $nameColumnWidth }}px; min-width:{{ $nameColumnWidth }}px">
                                 {{ $p['nombre'] }}
                             </td>
                             @for($d = 1; $d <= $dias; $d++)
@@ -140,7 +156,7 @@
                     <p class="text-[11px] text-ink-400 mt-0.5">Doble clic en otra celda para cambiar</p>
                 </div>
                 <div class="flex items-center gap-1">
-                    @if(auth()->user()?->role === 'admin' && $editing && isset($gridData[$editing]))
+                    @if(auth()->user()?->role === 'admin' && $editing && isset($this->gridData[$editing]))
                     <button wire:click="deleteCell" class="text-red-400 hover:text-red-600 transition-colors p-1" title="Eliminar registro">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                     </button>

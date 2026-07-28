@@ -3,11 +3,15 @@
 namespace App\Livewire\Olimpo;
 
 use Livewire\Component;
+use Livewire\Attributes\Computed;
 use Livewire\WithPagination;
 use App\Models\Ocurrencia;
 use App\Models\Personal;
 use App\Models\TipoOcurrencia;
 use App\Models\Cargo;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\OcurrenciasExport;
 
 class Ocurrencias extends Component
 {
@@ -17,6 +21,7 @@ class Ocurrencias extends Component
     public $selectedId = null;
     public $showForm = false;
     public $editId = null;
+    public $refreshKey = 0;
 
     // Form fields
     public $fecha = '';
@@ -38,6 +43,8 @@ class Ocurrencias extends Component
     public $filterFecha = '';
     public $filterHoraDesde = '';
     public $filterHoraHasta = '';
+    public $filterMesDesde = '';
+    public $filterMesHasta = '';
 
     // Config
     public $configHoraEntradaDia = '08:00';
@@ -45,13 +52,23 @@ class Ocurrencias extends Component
     public $configHoraEntradaNoche = '19:00';
     public $configHoraSalidaNoche = '07:00';
 
-    protected $listeners = ['panelChanged' => 'refreshData', 'importData' => 'handleImport'];
+    protected $queryString = ['search' => ['except' => '']];
 
-    protected $paginationTheme = 'tailwind';
+    protected $listeners = [
+        'importData' => 'handleImport',
+        'nueva' => 'nueva',
+        'editar' => 'editar',
+        'duplicar' => 'duplicar',
+        'eliminar' => 'eliminar',
+        'exportarExcel' => 'exportarExcel',
+        'exportarPDF' => 'exportarPDF',
+        'exportarCSV' => 'exportarCSV',
+    ];
 
     public function mount()
     {
         $this->fecha = now()->format('d/m/Y');
+        $this->search = request('search', '');
         $this->loadConfig();
     }
 
@@ -96,10 +113,18 @@ class Ocurrencias extends Component
     {
         $query = Ocurrencia::query()
             ->leftJoin('personal', 'ocurrencias.persona_id', '=', 'personal.id')
-            ->select('ocurrencias.*', 'personal.cargo as persona_cargo');
+            ->leftJoin('users', 'ocurrencias.user_id', '=', 'users.id')
+            ->select('ocurrencias.*', 'personal.cargo as persona_cargo', 'personal.alias as persona_alias', 'users.name as usuario_nombre');
 
         if ($this->filterTurno) {
             $query->where('ocurrencias.turno', $this->filterTurno);
+        }
+
+        if ($this->filterHoraDesde) {
+            $query->where('ocurrencias.hora_ingreso', '>=', $this->filterHoraDesde);
+        }
+        if ($this->filterHoraHasta) {
+            $query->where('ocurrencias.hora_ingreso', '<=', $this->filterHoraHasta);
         }
 
         if ($this->search) {
@@ -108,21 +133,35 @@ class Ocurrencias extends Component
                 $qry->where('ocurrencias.persona_nombre', 'like', "%{$q}%")
                     ->orWhere('ocurrencias.tipo', 'like', "%{$q}%")
                     ->orWhere('ocurrencias.detalles', 'like', "%{$q}%")
+                    ->orWhere('ocurrencias.otro', 'like', "%{$q}%")
+                    ->orWhere('ocurrencias.destino', 'like', "%{$q}%")
+                    ->orWhere('ocurrencias.motivo', 'like', "%{$q}%")
+                    ->orWhere('ocurrencias.vehiculo', 'like', "%{$q}%")
+                    ->orWhere('ocurrencias.observacion', 'like', "%{$q}%")
                     ->orWhere('ocurrencias.fecha', 'like', "%{$q}%")
-                    ->orWhere('personal.cargo', 'like', "%{$q}%");
+                    ->orWhere('personal.cargo', 'like', "%{$q}%")
+                    ->orWhere('personal.alias', 'like', "%{$q}%")
+                    ->orWhere('personal.documento', 'like', "%{$q}%")
+                    ->orWhere('personal.telefono', 'like', "%{$q}%");
             });
         }
 
-        $hasActiveFilter = $this->search || $this->filterFecha
-            || $this->filterHoraDesde || $this->filterHoraHasta;
-
-        if (!$hasActiveFilter) {
+        if ($this->search || $this->filterFecha
+            || $this->filterMesDesde || $this->filterMesHasta) {
+            if ($this->filterFecha) {
+                $f = \Carbon\Carbon::createFromFormat('d/m/Y', $this->filterFecha);
+                $query->where('ocurrencias.fecha', $f->format('d/m/Y'));
+            }
+            if ($this->filterMesDesde) {
+                $query->where('ocurrencias.mes', '>=', (int)$this->filterMesDesde);
+            }
+            if ($this->filterMesHasta) {
+                $query->where('ocurrencias.mes', '<=', (int)$this->filterMesHasta);
+            }
+        } else {
             $hoy = now()->format('d/m/Y');
             $ayer = now()->subDay()->format('d/m/Y');
             $query->whereIn('ocurrencias.fecha', [$hoy, $ayer]);
-        } elseif ($this->filterFecha) {
-            $f = \Carbon\Carbon::parse($this->filterFecha);
-            $query->where('ocurrencias.fecha', $f->format('d/m/Y'));
         }
 
         return $query;
@@ -135,19 +174,17 @@ class Ocurrencias extends Component
         $this->filterHoraDesde = '';
         $this->filterHoraHasta = '';
         $this->filterTurno = '';
-        $this->resetPage();
+        $this->filterMesDesde = '';
+        $this->filterMesHasta = '';
     }
 
-    public function updatedSearch() { $this->resetPage(); }
-    public function updatedFilterFecha() { $this->resetPage(); }
-    public function updatedFilterHoraDesde() { $this->resetPage(); }
-    public function updatedFilterHoraHasta() { $this->resetPage(); }
-    public function updatedFilterTurno() { $this->resetPage(); }
-
-    public function selectOcurrencia($id)
-    {
-        $this->selectedId = $id;
-    }
+    public function updatedSearch() {}
+    public function updatedFilterFecha() {}
+    public function updatedFilterHoraDesde() {}
+    public function updatedFilterHoraHasta() {}
+    public function updatedFilterTurno() {}
+    public function updatedFilterMesDesde() {}
+    public function updatedFilterMesHasta() {}
 
     public function addPersona()
     {
@@ -178,26 +215,28 @@ class Ocurrencias extends Component
         $this->editId = null;
     }
 
-    public function editar()
+    public function editar($id = null)
     {
-        if (!$this->selectedId) {
+        $id ??= $this->selectedId;
+        if (!$id) {
             $this->dispatch('notify', message: 'Selecciona una ocurrencia primero.', type: 'warning');
             return;
         }
-        $oc = Ocurrencia::find($this->selectedId);
+        $oc = Ocurrencia::find($id);
         if (!$oc) return;
         $this->fillForm($oc);
         $this->showForm = true;
         $this->editId = $oc->id;
     }
 
-    public function duplicar()
+    public function duplicar($id = null)
     {
-        if (!$this->selectedId) {
+        $id ??= $this->selectedId;
+        if (!$id) {
             $this->dispatch('notify', message: 'Selecciona una ocurrencia primero.', type: 'warning');
             return;
         }
-        $oc = Ocurrencia::find($this->selectedId);
+        $oc = Ocurrencia::find($id);
         if (!$oc) return;
         $this->fillForm($oc);
         $this->fecha = now()->format('d/m/Y');
@@ -205,17 +244,24 @@ class Ocurrencias extends Component
         $this->editId = null;
     }
 
-    public function eliminar()
+    public function abrirNota()
+    {
+        $this->dispatch('activate-nota-form')->to('olimpo.ocurrencias-table');
+    }
+
+    public function eliminar($id = null)
     {
         abort_unless(auth()->user()?->role === 'admin', 403);
-        if (!$this->selectedId) {
+        $id ??= $this->selectedId;
+        if (!$id) {
             $this->dispatch('notify', message: 'Selecciona una ocurrencia primero.', type: 'warning');
             return;
         }
-        $oc = Ocurrencia::find($this->selectedId);
+        $oc = Ocurrencia::find($id);
         if ($oc) {
             $oc->delete();
             $this->selectedId = null;
+            $this->refreshKey++;
             $this->resetPage();
             $this->dispatch('notify', message: 'Ocurrencia eliminada.', type: 'success');
         }
@@ -266,6 +312,7 @@ class Ocurrencias extends Component
             'turno' => $this->turno,
             'mes' => $mes,
             'anio' => $anio,
+            'user_id' => auth()->id(),
         ];
 
         if ($this->editId) {
@@ -279,6 +326,7 @@ class Ocurrencias extends Component
 
         $this->showForm = false;
         $this->selectedId = null;
+        $this->refreshKey++;
         $this->resetPage();
     }
 
@@ -330,6 +378,56 @@ class Ocurrencias extends Component
         $this->turno = $oc->turno;
     }
 
+    private function getExportRows(): array
+    {
+        return $this->getOcurrenciasQuery()
+            ->orderBy('ocurrencias.fecha', 'desc')
+            ->orderBy('ocurrencias.id', 'desc')
+            ->get()->toArray();
+    }
+
+    public function exportarExcel()
+    {
+        $rows = $this->getExportRows();
+        if (empty($rows)) {
+            $this->dispatch('notify', message: 'No hay datos para exportar.', type: 'warning');
+            return;
+        }
+        return Excel::download(new OcurrenciasExport($rows), 'Ocurrencias_' . now()->format('Ymd') . '.xlsx');
+    }
+
+    public function exportarPDF()
+    {
+        $rows = $this->getExportRows();
+        if (empty($rows)) {
+            $this->dispatch('notify', message: 'No hay datos para exportar.', type: 'warning');
+            return;
+        }
+        $pdf = Pdf::loadView('exports.ocurrencias-pdf', [
+            'rows' => $rows,
+            'columns' => \App\Exports\OcurrenciasExport::columnMap(),
+            'filtro' => 'Exportado desde Ocurrencias',
+        ]);
+        return response()->streamDownload(fn() => print($pdf->output()), 'Ocurrencias_' . now()->format('Ymd') . '.pdf');
+    }
+
+    public function exportarCSV()
+    {
+        $rows = $this->getExportRows();
+        if (empty($rows)) {
+            $this->dispatch('notify', message: 'No hay datos para exportar.', type: 'warning');
+            return;
+        }
+        $cols = array_keys(\App\Exports\OcurrenciasExport::columnMap());
+        $headers = array_values(\App\Exports\OcurrenciasExport::columnMap());
+        $csv = implode(',', $headers) . "\n";
+        foreach ($rows as $row) {
+            $vals = array_map(fn($c) => '"' . str_replace('"', '""', $row[$c] ?? '') . '"', $cols);
+            $csv .= implode(',', $vals) . "\n";
+        }
+        return response()->streamDownload(fn() => print($csv), 'Ocurrencias_' . now()->format('Ymd') . '.csv', ['Content-Type' => 'text/csv']);
+    }
+
     public function handleImport($rows)
     {
         $result = \App\Imports\OcurrenciasImport::insert($rows ?? []);
@@ -341,10 +439,17 @@ class Ocurrencias extends Component
         $this->resetPage();
     }
 
+    #[Computed]
+    public function getTipoColoresProperty()
+    {
+        return TipoOcurrencia::where('activo', true)
+            ->pluck('color', 'nombre')
+            ->toArray();
+    }
+
     public function tipoColor($tipo)
     {
-        $t = TipoOcurrencia::where('nombre', $tipo)->first();
-        return $t ? $t->color : '#888899';
+        return $this->tipoColores[$tipo] ?? '#888899';
     }
 
     public function getNombresProperty()
@@ -361,6 +466,11 @@ class Ocurrencias extends Component
             ->toArray();
 
         return array_values(array_unique(array_merge($personal, $ocurrencias)));
+    }
+
+    public function getNombresConAliasProperty()
+    {
+        return Personal::activos()->whereNotNull('alias')->pluck('alias', 'nombre')->toArray();
     }
 
     public function getDetallesListProperty()
@@ -425,39 +535,15 @@ class Ocurrencias extends Component
 
     public function render()
     {
-        $query = $this->getOcurrenciasQuery();
-
-        if ($this->filterHoraDesde || $this->filterHoraHasta) {
-            $rows = $query->get();
-            $rows = $rows->filter(function($r) {
-                $h = $r->hora_ingreso;
-                if (!$h) return true;
-                try {
-                    $parts = explode(':', $h);
-                    $mins = (int)$parts[0] * 60 + (int)$parts[1];
-                    $desde = $this->filterHoraDesde ? (int)explode(':', $this->filterHoraDesde)[0] * 60 + (int)explode(':', $this->filterHoraDesde)[1] : 0;
-                    $hasta = $this->filterHoraHasta ? (int)explode(':', $this->filterHoraHasta)[0] * 60 + (int)explode(':', $this->filterHoraHasta)[1] : 1440;
-                    return $mins >= $desde && $mins <= $hasta;
-                } catch (\Exception $e) {
-                    return true;
-                }
-            })->sortByDesc('fecha')->values();
-            $ocurrencias = $rows;
-        } else {
-            $ocurrencias = $query->orderBy('ocurrencias.fecha', 'desc')
-                ->orderBy('ocurrencias.id', 'desc')
-                ->paginate(25);
-        }
-
         return view('livewire.olimpo.ocurrencias', [
             'nombres' => $this->nombres,
+            'nombresConAlias' => $this->nombresConAlias,
             'tipos' => $this->tipos,
             'detallesList' => $this->detallesList,
             'observacionList' => $this->observacionList,
             'vehiculoList' => $this->vehiculoList,
             'destinoList' => $this->destinoList,
             'motivoList' => $this->motivoList,
-            'ocurrencias' => $ocurrencias,
         ])->layout('layouts.olimpo', ['title' => 'Ocurrencias']);
     }
 }

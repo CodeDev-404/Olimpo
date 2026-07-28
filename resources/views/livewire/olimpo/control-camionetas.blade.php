@@ -39,7 +39,15 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="px-3 py-12 text-center text-ink-400">No hay camionetas registradas</td>
+                                <td colspan="7" class="px-3 py-16 text-center">
+                                    <div class="empty-state">
+                                        <div class="empty-state-icon">
+                                            <i data-lucide="car" class="w-8 h-8 text-ink-300 dark:text-white/20"></i>
+                                        </div>
+                                        <p class="empty-state-title">No hay camionetas registradas</p>
+                                        <p class="empty-state-desc">Las camionetas aparecerán aquí una vez que se registren.</p>
+                                    </div>
+                                </td>
                             </tr>
                         @endforelse
                     </tbody>

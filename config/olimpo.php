@@ -1,0 +1,85 @@
+<?php
+
+return [
+    'panels' => [
+        'olimpo.dashboard' => [
+            'slug' => 'dashboard',
+            'title' => 'Dashboard',
+            'icon' => 'layout-dashboard',
+            'desc' => 'Resumen general del sistema con saludo motivacional',
+            'group' => 'General',
+        ],
+        'olimpo.ocurrencias' => [
+            'slug' => 'ocurrencias',
+            'title' => 'Ocurrencias',
+            'icon' => 'clipboard-list',
+            'desc' => 'Registro de entrada y salida de personal, vehículos y visitas',
+            'group' => 'Gestión',
+        ],
+        'olimpo.asistencia' => [
+            'slug' => 'asistencia',
+            'title' => 'Asistencia',
+            'icon' => 'calendar',
+            'desc' => 'Planilla mensual de asistencia del personal',
+            'group' => 'Gestión',
+        ],
+        'olimpo.personal' => [
+            'slug' => 'personal',
+            'title' => 'Personal',
+            'icon' => 'users',
+            'desc' => 'Gestión de datos del personal, cargos y grupos',
+            'group' => 'Gestión',
+        ],
+        'olimpo.recordatorios' => [
+            'slug' => 'recordatorios',
+            'title' => 'Recordatorios',
+            'icon' => 'bell',
+            'desc' => 'Notificaciones, cumpleaños y pendientes del personal',
+            'group' => 'Gestión',
+        ],
+        'olimpo.control-vehiculos' => [
+            'slug' => 'control-vehiculos',
+            'title' => 'Control Vehículos',
+            'icon' => 'truck',
+            'desc' => 'Movimientos de camionetas y control de combustible',
+            'group' => 'Control',
+        ],
+        'olimpo.registro-palm' => [
+            'slug' => 'registro-palm',
+            'title' => 'Registro PALM',
+            'icon' => 'fingerprint',
+            'desc' => 'Registro de lectura biométrica PALM',
+            'group' => 'Control',
+        ],
+        'olimpo.cumpleanos' => [
+            'slug' => 'cumpleanos',
+            'title' => 'Cumpleaños',
+            'icon' => 'cake',
+            'desc' => 'Registro y control de cumpleaños del personal',
+            'group' => 'Datos',
+        ],
+        'olimpo.mas-herramientas' => [
+            'slug' => 'mas-herramientas',
+            'title' => 'Más Herramientas',
+            'icon' => 'toolbox',
+            'desc' => 'Herramientas utilitarias: editor PDF, convertidor y descarga de videos',
+            'group' => 'Utilidades',
+        ],
+        'olimpo.config' => [
+            'slug' => 'configuracion',
+            'title' => 'Configuración',
+            'icon' => 'settings',
+            'desc' => 'Ajustes del sistema, usuarios y preferencias',
+            'group' => 'Sistema',
+            'sidebar' => false,
+        ],
+        'olimpo.mi-cuenta' => [
+            'slug' => 'mi-cuenta',
+            'title' => 'Mi Cuenta',
+            'icon' => 'user',
+            'desc' => 'Información personal, seguridad y preferencias de tu cuenta',
+            'group' => 'Cuenta',
+            'sidebar' => true,
+        ],
+    ],
+];

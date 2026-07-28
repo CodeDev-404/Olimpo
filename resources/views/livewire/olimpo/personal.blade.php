@@ -20,7 +20,7 @@
     <div class="card">
         <div class="card-header">
             <span class="text-xs text-ink-500 font-medium">
-                Todo el personal <span class="text-ink-300">({{ count($personal) }})</span>
+                Todo el personal <span class="text-ink-300">({{ count($this->personal) }})</span>
             </span>
         </div>
         <div class="card-body p-0">
@@ -41,7 +41,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($personal as $i => $p)
+                        @forelse($this->personal as $i => $p)
                             <tr wire:click="selectPersona({{ $p['id'] }})"
                                 class="cursor-pointer {{ $selectedId === $p['id'] ? 'bg-ink-50' : '' }}">
                                 <td class="font-mono text-ink-400 text-xs">{{ $i + 1 }}</td>
@@ -87,7 +87,13 @@
                         @empty
                             <tr>
                                 <td colspan="10" class="px-3 py-12 text-center text-ink-400">
-                                    No hay personal registrado
+                                    <div class="empty-state">
+                                        <div class="empty-state-icon">
+                                            <i data-lucide="users" class="w-8 h-8 text-ink-300 dark:text-white/20"></i>
+                                        </div>
+                                        <p class="empty-state-title">No hay personal registrado</p>
+                                        <p class="empty-state-desc">El personal aparecerá aquí una vez que se registre.</p>
+                                    </div>
                                 </td>
                             </tr>
                         @endforelse
@@ -101,8 +107,14 @@
     <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
         @keydown.escape.window="$wire.cancel"
         x-data
+        x-transition:enter="transition-all duration-200 ease-out"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
         wire:key="form-modal">
-        <div class="bg-white rounded-xl shadow-[0_8px_32px_rgb(0_0_0_/_0.12)] w-full max-w-lg max-h-[90vh] overflow-y-auto mx-4">
+        <div class="bg-white rounded-xl shadow-[0_8px_32px_rgb(0_0_0_/_0.12)] w-full max-w-lg max-h-[90vh] overflow-y-auto mx-4"
+            x-transition:enter="transition-all duration-200 ease-out"
+            x-transition:enter-start="opacity-0 scale-95"
+            x-transition:enter-end="opacity-100 scale-100">
             <div class="flex items-center justify-between px-6 py-4">
                 <h4 class="font-semibold text-ink-900 text-sm">{{ $editId ? 'Editar Personal' : 'Nuevo Personal' }}</h4>
                 <button wire:click="cancel" class="p-1 text-ink-400 hover:text-ink-700 rounded-md hover:bg-ink-100">
@@ -194,10 +206,12 @@
                     </select>
                 </div>
             </div>
-            <div class="flex items-center justify-between px-6 py-4 border-t border-ink-100">
+            <div class="flex items-center justify-between px-6 py-4 border-t border-[#e5eaef]">
                 <button wire:click="cancel" class="btn btn-secondary">Cancelar</button>
-                <button wire:click="save" class="btn btn-primary">
-                    {{ $editId ? 'Actualizar' : 'Guardar' }}
+                <button wire:click="save" class="btn btn-primary" wire:loading.attr="disabled">
+                    <svg wire:loading wire:target="save" class="w-4 h-4 mr-1.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                    <span wire:loading.remove wire:target="save">{{ $editId ? 'Actualizar' : 'Guardar' }}</span>
+                    <span wire:loading wire:target="save">Guardando...</span>
                 </button>
             </div>
         </div>
