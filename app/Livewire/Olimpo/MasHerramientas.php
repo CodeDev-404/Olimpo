@@ -4,6 +4,7 @@ namespace App\Livewire\Olimpo;
 
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Mpdf\Mpdf;
 use PhpOffice\PhpWord\IOFactory;
@@ -76,7 +77,9 @@ class MasHerramientas extends Component
 
     public function render()
     {
-        return view('livewire.olimpo.mas-herramientas')
+        $resultado = $this->resultadoKey ? Cache::get($this->resultadoKey) : null;
+
+        return view('livewire.olimpo.mas-herramientas', ['resultado' => $resultado])
             ->layout('layouts.olimpo', ['title' => 'Más Herramientas']);
     }
 
@@ -479,7 +482,7 @@ class MasHerramientas extends Component
     public string $tipo = 'dni';
     public string $herramienta = 'consultadni';
     public string $modo = 'simple';
-    public ?array $resultado = null;
+    public ?string $resultadoKey = null;
     public array $historial = [];
     public bool $showModal = false;
     public string $modalTitle = '';
@@ -501,9 +504,24 @@ class MasHerramientas extends Component
             })
             ->values()
             ->toArray();
-        $this->resultado = null;
+        $this->limpiarResultado();
         $this->showModal = false;
         $this->cargarHistorial();
+    }
+
+    private function guardarResultado(array $data): void
+    {
+        $key = 'consulta_resultado_' . auth()->id();
+        Cache::put($key, $data, now()->addHours(2));
+        $this->resultadoKey = $key;
+    }
+
+    private function limpiarResultado(): void
+    {
+        if ($this->resultadoKey) {
+            Cache::forget($this->resultadoKey);
+        }
+        $this->resultadoKey = null;
     }
 
     public function cambiarModo(string $modo)
@@ -565,7 +583,7 @@ class MasHerramientas extends Component
             }
         }
 
-        $this->resultado = null;
+        $this->limpiarResultado();
         $this->showModal = false;
         $this->documento = '';
         $this->searchTerm = '';
@@ -613,7 +631,7 @@ class MasHerramientas extends Component
         }
 
         if ($data) {
-            $this->resultado = $data;
+            $this->guardarResultado($data);
             $this->showModal = true;
 
             $herramientaLabel = collect($this->herramientas)->firstWhere('id', $this->herramienta)['label'] ?? $this->herramienta;
@@ -632,7 +650,7 @@ class MasHerramientas extends Component
             $this->cargarHistorial();
             $this->dispatch('notify', message: 'Consulta exitosa: '.$nombreMostrar, type: 'success');
         } else {
-            $this->resultado = ['error' => true];
+            $this->guardarResultado(['error' => true]);
             $this->showModal = true;
             $herramientaLabel = collect($this->herramientas)->firstWhere('id', $this->herramienta)['label'] ?? $this->herramienta;
             $this->modalTitle = 'RESULTADO: '.strtoupper($herramientaLabel);
@@ -646,7 +664,9 @@ class MasHerramientas extends Component
         $entry = $this->historial[$index] ?? null;
         if ($entry) {
             $full = \App\Models\ConsultaHistorial::find($entry['id']);
-            $this->resultado = $full?->resultado_json;
+            if ($full?->resultado_json) {
+                $this->guardarResultado($full->resultado_json);
+            }
             $this->documento = $entry['documento'];
             $this->searchTerm = $entry['documento'];
             $this->modalTitle = 'RESULTADO: '.strtoupper($entry['tipo']);

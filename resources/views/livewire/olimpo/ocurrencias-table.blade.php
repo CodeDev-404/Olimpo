@@ -41,6 +41,13 @@ if (!function_exists('h')) {
                 <span class="text-xs text-ink-400 font-medium whitespace-nowrap">{{ count($selectedIds) }} seleccionados</span>
             @endif
 
+            @if($selectMode && count($selectedIds) > 0)
+                <button wire:click="eliminarSeleccionados" wire:confirm="¿Eliminar las ocurrencias seleccionadas?" class="btn btn-danger btn-sm">
+                    <i data-lucide="trash-2" class="w-4 h-4 mr-1.5 shrink-0"></i>
+                    Eliminar selección
+                </button>
+            @endif
+
             <button wire:click="toggleSelectMode" style="width:130px" class="btn btn-sm {{ $selectMode ? 'btn-warning' : 'btn-outline' }}">
                 @if($selectMode)
                     <i data-lucide="circle-x" class="w-4 h-4 mr-1.5 shrink-0"></i>
@@ -77,11 +84,6 @@ if (!function_exists('h')) {
                 </div>
             </div>
 
-            <button wire:click="nuevaNota" class="btn btn-outline btn-sm">
-                <i data-lucide="sticky-note" class="w-4 h-4 mr-1.5 shrink-0"></i>
-                Nota
-            </button>
-
         </div>
     </div>
     <div class="card-body p-0">
@@ -92,37 +94,39 @@ if (!function_exists('h')) {
                         @if($selectMode)
                         <th class="w-10">
                             <input type="checkbox" wire:click="toggleSelectAll"
+                                wire:key="select-all-{{ count($selectedIds) > 0 && collect($ocurrencias->items())->pluck('id')->every(fn($id) => in_array($id, $selectedIds)) ? 'on' : 'off' }}"
                                 {{ count($selectedIds) > 0 && collect($ocurrencias->items())->pluck('id')->every(fn($id) => in_array($id, $selectedIds)) ? 'checked' : '' }}>
                         </th>
                         @endif
-                        <th>#</th>
+                        <th class="hidden sm:table-cell">#</th>
                         <th>Fecha</th>
-                        <th>Ingreso</th>
-                        <th>Salida</th>
+                        <th class="hidden lg:table-cell">Ingreso</th>
+                        <th class="hidden lg:table-cell">Salida</th>
                         <th>Nombre</th>
-                        <th>Vehículo</th>
-                        <th>Destino</th>
-                        <th>Motivo</th>
-                        <th>Detalles</th>
-                        <th>Obs.</th>
-                        <th>Cargo</th>
-                        <th>Tipo</th>
-                        <th>Otro</th>
+                        <th class="hidden md:table-cell">Vehículo</th>
+                        <th class="hidden xl:table-cell">Destino</th>
+                        <th class="hidden xl:table-cell">Motivo</th>
+                        <th class="hidden xl:table-cell">Detalles</th>
+                        <th class="hidden xl:table-cell">Obs.</th>
+                        <th class="hidden lg:table-cell">Cargo</th>
+                        <th class="hidden md:table-cell">Tipo</th>
+                        <th class="hidden lg:table-cell">Otro</th>
                         <th>Turno</th>
-                        <th>Usuario</th>
+                        <th class="hidden lg:table-cell">Usuario</th>
                         <th class="w-10"></th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($ocurrencias as $i => $oc)
                         @php $isNota = $oc['es_nota'] ?? false; @endphp
-                        <tr class="whitespace-nowrap {{ $selectMode && in_array($oc['id'], $selectedIds) ? 'bg-ink-50 dark:bg-ink-800' : '' }} @if($isNota) @php $t = $oc['tipo'] ?? 'Nota'; $par = $i % 2 === 0; @endphp {{ $t === 'Importante' ? ($par ? 'bg-amber-100/70 dark:bg-amber-900/25' : 'bg-amber-200/70 dark:bg-amber-900/40') : ($par ? 'bg-emerald-100/70 dark:bg-emerald-900/20' : 'bg-emerald-200/60 dark:bg-emerald-900/30') }} @endif">
+                        <tr class="whitespace-nowrap {{ $selectMode && in_array($oc['id'], $selectedIds) ? 'bg-ink-50 dark:bg-ink-800' : '' }} @if($isNota) @php $t = $oc['tipo'] ?? 'Nota'; $par = $i % 2 === 0; @endphp {{ $t === 'Importante' ? ($par ? 'bg-amber-100/70 dark:bg-amber-900/25' : 'bg-amber-200/70 dark:bg-amber-900/40') : ($par ? 'bg-emerald-100/70 dark:bg-emerald-900/20' : 'bg-emerald-200/60 dark:bg-emerald-900/30') }} @elseif($i % 2 === 1) table-row-zebra @endif">
                             @if($selectMode)
                             <td class="w-10" wire:click.stop="toggleSelect({{ $oc['id'] }})">
-                                <input type="checkbox" {{ in_array($oc['id'], $selectedIds) ? 'checked' : '' }}>
+                                <input type="checkbox" wire:key="row-{{ $oc['id'] }}-{{ in_array($oc['id'], $selectedIds) ? 'on' : 'off' }}"
+                                    {{ in_array($oc['id'], $selectedIds) ? 'checked' : '' }}>
                             </td>
                             @endif
-                            <td class="font-mono text-ink-400 text-xs">{{ $i + 1 }}</td>
+                            <td class="hidden sm:table-cell font-mono text-ink-400 text-xs">{{ $i + 1 }}</td>
 
                             @if($isNota)
                                 @php
@@ -132,8 +136,8 @@ if (!function_exists('h')) {
                                 <td class="font-medium">{!! h($oc['fecha'] ?? '', $search) !!}</td>
 
                                 @if($notaHasData)
-                                    <td class="tabular-nums">{{ $oc['hora_ingreso'] ?? '—' }}</td>
-                                    <td class="tabular-nums">{{ $oc['hora_salida'] ?? '—' }}</td>
+                                    <td class="hidden lg:table-cell tabular-nums">{{ $oc['hora_ingreso'] ?? '—' }}</td>
+                                    <td class="hidden lg:table-cell tabular-nums">{{ $oc['hora_salida'] ?? '—' }}</td>
                                     <td class="max-w-[140px] truncate font-medium">{!! h($oc['persona_nombre'] ?? '', $search) !!}</td>
                                     <td colspan="6" class="text-ink-500 italic whitespace-normal max-w-none">
                                         {!! h($oc['nota_texto'] ?? '', $search) !!}
@@ -144,7 +148,7 @@ if (!function_exists('h')) {
                                     </td>
                                 @endif
 
-                                <td>
+                                <td class="hidden md:table-cell">
                                     @if($oc['tipo'] ?? false)
                                     <span class="badge" style="background: {{ $this->tipoColor($oc['tipo']) }}18; color: {{ $this->tipoColor($oc['tipo']) }}">
                                         {!! h($oc['tipo'], $search) !!}
@@ -153,11 +157,11 @@ if (!function_exists('h')) {
                                     <span class="text-ink-300">—</span>
                                     @endif
                                 </td>
-                                <td class="max-w-[100px] truncate text-ink-400 cursor-pointer"
+                                <td class="hidden lg:table-cell max-w-[100px] truncate text-ink-400 cursor-pointer"
                                     @dblclick="popContent = $el.dataset.content; popTitle = 'Otro'; showPop = true"
                                     data-content="{{ $oc['otro'] ?? '' }}">@if(!empty($oc['otro'])){!! h($oc['otro'], $search) !!}@else<span class="text-ink-300">—</span>@endif</td>
                                 <td><span class="badge {{ $oc['turno'] === 'NOCHE' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300' : 'bg-ember-100 text-ember-700 dark:bg-ember-900/30 dark:text-ember-300' }}">{{ $oc['turno'] ?? 'DÍA' }}</span></td>
-                                <td class="text-ink-500 dark:text-ink-400 text-xs whitespace-normal">
+                                <td class="hidden lg:table-cell text-ink-500 dark:text-ink-400 text-xs whitespace-normal">
                                     @if(!empty($oc['usuario_nombre']))
                                         <span>{{ $oc['usuario_nombre'] }}</span>
                                         @if($oc['created_at'] != $oc['updated_at'])
@@ -169,9 +173,9 @@ if (!function_exists('h')) {
                                 </td>
                             @else
                             <td class="font-medium">@if(!empty($oc['fecha'])){{ $oc['fecha'] }}@else<span class="text-ink-300">—</span>@endif</td>
-                            <td class="tabular-nums">@if(!empty($oc['hora_ingreso'])){{ $oc['hora_ingreso'] }}@else<span class="text-ink-300">—</span>@endif</td>
-                            <td class="tabular-nums">@if(!empty($oc['hora_salida'])){{ $oc['hora_salida'] }}@else<span class="text-ink-300">—</span>@endif</td>
-                            <td class="max-w-[140px] truncate font-medium cursor-pointer"
+                            <td class="hidden lg:table-cell tabular-nums">@if(!empty($oc['hora_ingreso'])){{ $oc['hora_ingreso'] }}@else<span class="text-ink-300">—</span>@endif</td>
+                            <td class="hidden lg:table-cell tabular-nums">@if(!empty($oc['hora_salida'])){{ $oc['hora_salida'] }}@else<span class="text-ink-300">—</span>@endif</td>
+                            <td class="max-w-[120px] sm:max-w-[140px] truncate font-medium cursor-pointer"
                                 @dblclick="popContent = $el.dataset.content; popTitle = 'Nombre'; showPop = true"
                                 data-content="{{ $oc['persona_nombre'] ?? '' }}{{ !empty($oc['persona_alias']) ? ' (' . $oc['persona_alias'] . ')' : '' }}">
                                 @if(!empty($oc['persona_alias']))
@@ -182,25 +186,25 @@ if (!function_exists('h')) {
                                     <span class="text-ink-300">—</span>
                                 @endif
                             </td>
-                            <td class="max-w-[100px] truncate text-ink-500 dark:text-ink-400 cursor-pointer"
+                            <td class="hidden md:table-cell max-w-[80px] lg:max-w-[100px] truncate text-ink-500 dark:text-ink-400 cursor-pointer"
                                 @dblclick="popContent = $el.dataset.content; popTitle = 'Vehículo'; showPop = true"
                                 data-content="{{ $oc['vehiculo'] ?? '' }}">@if(!empty($oc['vehiculo'])){!! h($oc['vehiculo'], $search) !!}@else<span class="text-ink-300">—</span>@endif</td>
-                            <td class="max-w-[100px] truncate text-ink-500 dark:text-ink-400 cursor-pointer"
+                            <td class="hidden xl:table-cell max-w-[100px] truncate text-ink-500 dark:text-ink-400 cursor-pointer"
                                 @dblclick="popContent = $el.dataset.content; popTitle = 'Destino'; showPop = true"
                                 data-content="{{ $oc['destino'] ?? '' }}">@if(!empty($oc['destino'])){!! h($oc['destino'], $search) !!}@else<span class="text-ink-300">—</span>@endif</td>
-                            <td class="max-w-[100px] truncate text-ink-500 dark:text-ink-400 cursor-pointer"
+                            <td class="hidden xl:table-cell max-w-[100px] truncate text-ink-500 dark:text-ink-400 cursor-pointer"
                                 @dblclick="popContent = $el.dataset.content; popTitle = 'Motivo'; showPop = true"
                                 data-content="{{ $oc['motivo'] ?? '' }}">@if(!empty($oc['motivo'])){!! h($oc['motivo'], $search) !!}@else<span class="text-ink-300">—</span>@endif</td>
-                            <td class="max-w-[180px] truncate text-ink-500 dark:text-ink-400 cursor-pointer"
+                            <td class="hidden xl:table-cell max-w-[180px] truncate text-ink-500 dark:text-ink-400 cursor-pointer"
                                 @dblclick="popContent = $el.dataset.content; popTitle = 'Detalles'; showPop = true"
                                 data-content="{{ $oc['detalles'] ?? '' }}">@if(!empty($oc['detalles'])){!! h($oc['detalles'], $search) !!}@else<span class="text-ink-300">—</span>@endif</td>
-                            <td class="max-w-[120px] truncate text-ink-400 italic cursor-pointer"
+                            <td class="hidden xl:table-cell max-w-[120px] truncate text-ink-400 italic cursor-pointer"
                                 @dblclick="popContent = $el.dataset.content; popTitle = 'Observación'; showPop = true"
                                 data-content="{{ $oc['observacion'] ?? '' }}">@if(!empty($oc['observacion'])){!! h($oc['observacion'], $search) !!}@else<span class="text-ink-300">—</span>@endif</td>
-                            <td class="max-w-[100px] truncate text-ink-600 dark:text-ink-400 cursor-pointer"
+                            <td class="hidden lg:table-cell max-w-[100px] truncate text-ink-600 dark:text-ink-400 cursor-pointer"
                                 @dblclick="popContent = $el.dataset.content; popTitle = 'Cargo'; showPop = true"
                                 data-content="{{ $oc['persona_cargo'] ?? '' }}">@if(!empty($oc['persona_cargo'])){!! h($oc['persona_cargo'], $search) !!}@else<span class="text-ink-300">—</span>@endif</td>
-                            <td>
+                            <td class="hidden md:table-cell">
                                 @if($oc['tipo'] ?? false)
                                 <span class="badge" style="background: {{ $this->tipoColor($oc['tipo']) }}18; color: {{ $this->tipoColor($oc['tipo']) }}">
                                     {!! h($oc['tipo'], $search) !!}
@@ -209,11 +213,11 @@ if (!function_exists('h')) {
                                 <span class="text-ink-300">—</span>
                                 @endif
                             </td>
-                            <td class="max-w-[100px] truncate text-ink-400 cursor-pointer"
+                            <td class="hidden lg:table-cell max-w-[100px] truncate text-ink-400 cursor-pointer"
                                 @dblclick="popContent = $el.dataset.content; popTitle = 'Otro'; showPop = true"
                                 data-content="{{ $oc['otro'] ?? '' }}">@if(!empty($oc['otro'])){!! h($oc['otro'], $search) !!}@else<span class="text-ink-300">—</span>@endif</td>
                             <td><span class="badge {{ $oc['turno'] === 'NOCHE' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300' : 'bg-ember-100 text-ember-700 dark:bg-ember-900/30 dark:text-ember-300' }}">{{ $oc['turno'] ?? 'DÍA' }}</span></td>
-                            <td class="text-ink-500 dark:text-ink-400 text-xs whitespace-normal">
+                            <td class="hidden lg:table-cell text-ink-500 dark:text-ink-400 text-xs whitespace-normal">
                                 @if(!empty($oc['usuario_nombre']))
                                     <span>{{ $oc['usuario_nombre'] }}</span>
                                     @if($oc['created_at'] != $oc['updated_at'])
@@ -225,24 +229,26 @@ if (!function_exists('h')) {
                             </td>
                             @endif
 
-                            <td class="w-10" x-data="{ open: false, top: 0, left: 0 }" @click.outside="open = false">
-                                <button @click="open = !open; if(open) { let r = $el.getBoundingClientRect(); top = r.bottom + 4; left = r.right - 176; } $event.stopPropagation()" class="p-1.5 rounded-md hover:bg-ink-100 dark:hover:bg-white/[0.06] text-ink-400 hover:text-ink-700 dark:hover:text-ink-200">
+                            <td class="w-10" x-data>
+                                <button @click="$store.rowMenu.toggle('oc-{{ $oc['id'] }}', $el); $event.stopImmediatePropagation()"
+                                    :class="$store.rowMenu.opened('oc-{{ $oc['id'] }}') ? 'bg-ink-100 dark:bg-white/[0.06] text-ink-700 dark:text-ink-200' : 'text-ink-400 hover:text-ink-700 dark:hover:text-ink-200'"
+                                    class="p-1.5 rounded-md hover:bg-ink-100 dark:hover:bg-white/[0.06]">
                                     <i data-lucide="ellipsis-vertical" class="w-4 h-4"></i>
                                 </button>
-                                <div x-show="open" x-cloak @click.stop
-                                    :style="'position:fixed;top:' + top + 'px;left:' + left + 'px;z-index:9999'"
+                                <div x-show="$store.rowMenu.opened('oc-{{ $oc['id'] }}')" x-cloak
+                                    x-effect="if ($store.rowMenu.opened('oc-{{ $oc['id'] }}')) { $el.style.position = 'fixed'; $el.style.top = $store.rowMenu.top + 'px'; if ($store.rowMenu.right != null) { $el.style.right = $store.rowMenu.right + 'px'; $el.style.left = ''; } else { $el.style.left = $store.rowMenu.left + 'px'; $el.style.right = ''; } $el.style.zIndex = '9999'; }"
                                     class="w-44 bg-white dark:bg-[#1C1F2E] border border-[#e5eaef] dark:border-white/[0.06] rounded-lg shadow-lg py-1">
-                                    <button wire:click="$dispatch('editar', { id: {{ $oc['id'] }} })" @click="open = false"
+                                    <button wire:click="$dispatch('editar', { id: {{ $oc['id'] }} })"
                                         class="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-ink-700 dark:text-white/70 hover:bg-ink-50 dark:hover:bg-white/[0.06]">
                                         <i data-lucide="pencil" class="w-4 h-4 shrink-0"></i>
                                         Editar
                                     </button>
-                                    <button wire:click="$dispatch('duplicar', { id: {{ $oc['id'] }} })" @click="open = false"
+                                    <button wire:click="$dispatch('duplicar', { id: {{ $oc['id'] }} })"
                                         class="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-ink-700 dark:text-white/70 hover:bg-ink-50 dark:hover:bg-white/[0.06]">
                                         <i data-lucide="clipboard-list" class="w-4 h-4 shrink-0"></i>
                                         Duplicar
                                     </button>
-                                    <button wire:click="$dispatch('eliminar', { id: {{ $oc['id'] }} })" wire:confirm="¿Eliminar esta ocurrencia?" @click="open = false"
+                                    <button wire:click="$dispatch('eliminar', { id: {{ $oc['id'] }} })" wire:confirm="¿Eliminar esta ocurrencia?"
                                         class="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
                                         <i data-lucide="trash-2" class="w-4 h-4 shrink-0"></i>
                                         Eliminar
@@ -252,7 +258,7 @@ if (!function_exists('h')) {
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="{{ $selectMode ? 17 : 16 }}" class="px-3 py-16 text-center">
+                            <td colspan="{{ $selectMode ? 17 : 16 }}" class="px-3 py-8 sm:py-16 text-center">
                                 <div class="empty-state">
                                     <div class="empty-state-icon">
                                         <i data-lucide="inbox" class="w-8 h-8 text-ink-300 dark:text-white/20"></i>
@@ -273,7 +279,7 @@ if (!function_exists('h')) {
     </div>
     @endif
     @if($showNotaForm)
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 transform" wire:click.self="cancelarNota">
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 transform">
     <div class="bg-white dark:bg-[#1C1F2E] rounded-xl shadow-lg border border-[#e5eaef] dark:border-white/[0.06] w-full max-w-lg mx-4 overflow-hidden">
         <div class="flex items-center justify-between px-5 py-3 border-b border-[#e5eaef] dark:border-white/[0.06]">
             <h3 class="text-sm font-semibold text-ink-800 dark:text-white flex items-center gap-2">

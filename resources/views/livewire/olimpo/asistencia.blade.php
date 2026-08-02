@@ -1,45 +1,144 @@
-<div x-data="{ filtersOpen: true }" x-cloak>
-    <div class="card mb-5">
+<div x-data="{ filtersOpen: false }" x-cloak>
+    <div class="card mb-5" style="overflow:visible">
         <div class="card-body">
-            <div class="flex flex-wrap items-center gap-3">
-                <button
-                    class="flex items-center gap-1.5 px-3 h-9 rounded-lg border border-ink-200 dark:border-ink-600 bg-white dark:bg-ink-800/50 text-ink-400 dark:text-ink-500 hover:border-[#5D87FF] dark:hover:border-[#5D87FF] hover:text-[#5D87FF] dark:hover:text-[#5D87FF] transition-all duration-150 shrink-0"
+        <div class="flex flex-wrap items-center gap-3">
+            <div class="relative w-full sm:w-[12.8rem] sm:min-w-[12.8rem]">
+                <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ink-400"></i>
+                <input type="text" wire:model.live="search" placeholder="Buscar..."
+                    class="input-field pl-9 h-9 w-full" />
+            </div>
+
+            <button
+                class="flex items-center gap-1.5 px-3 h-9 rounded-lg border border-[#e5eaef] dark:border-white/[0.06] bg-white dark:bg-ink-800/50 text-ink-400 dark:text-ink-500 hover:border-[#5D87FF] dark:hover:border-[#5D87FF] hover:text-[#5D87FF] dark:hover:text-[#5D87FF] transition-all duration-150 shrink-0"
                     :class="{ 'border-[#5D87FF] dark:border-[#5D87FF] text-[#5D87FF] dark:text-[#5D87FF] bg-[#5D87FF]/10 dark:bg-[#5D87FF]/20': filtersOpen }"
                     @click="filtersOpen = !filtersOpen"
-                    :title="filtersOpen ? 'Cerrar filtros' : 'Abrir filtros'">
+                    :title="filtersOpen ? 'Cerrar' : 'Abrir filtros'">
                     <svg x-show="!filtersOpen" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21v-7"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 6V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><path d="M2 14h4"/><path d="M10 8h4"/><path d="M18 16h4"/></svg>
                     <span x-show="!filtersOpen" class="text-xs font-medium">Filtrar</span>
                     <svg x-show="filtersOpen" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                     <span x-show="filtersOpen" class="text-xs font-medium">Cerrar</span>
                 </button>
 
-                <div x-show="filtersOpen" class="flex items-center gap-3 filter-slide-in">
-                    <span class="text-[11px] text-ink-500 font-semibold uppercase tracking-wider">Mes:</span>
-                    <input type="month" wire:model.live="filterMes" class="input-field h-9">
-                    <button wire:click="guardarMes" class="btn btn-success btn-sm h-9">Guardar Mes</button>
+                <div x-show="filtersOpen" wire:ignore x-cloak class="flex flex-nowrap items-center gap-2 sm:gap-3 filter-slide-in">
+                    <span class="text-[11px] text-ink-500 font-semibold uppercase tracking-wider shrink-0">Mes:</span>
+                        <div class="relative" x-data="{
+                            open: false,
+                            y: {{ (int)$anio }},
+                            m: {{ (int)$mes - 1 }},
+                            val: '{{ $filterMes }}',
+                            meses: ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'],
+                            esActual(i){ return i === {{ (int)now()->format('m') - 1 }} && this.y === {{ (int)now()->year }}; },
+                            seleccionar(i){ this.m = i; this.val = this.y + '-' + String(i + 1).padStart(2, '0'); $wire.set('filterMes', this.val); this.open = false; },
+                            init(){ this.$nextTick(() => this.aplicarMes()); this.$watch('val', () => this.aplicarMes()); },
+                            aplicarMes(){
+                                const grid = this.$refs.mesGrid;
+                                if (!grid) return;
+                                grid.querySelectorAll('.mes-btn').forEach(b => {
+                                    const i = this.meses.indexOf(b.textContent.trim());
+                                    const s = this.y + '-' + String(i + 1).padStart(2, '0');
+                                    const sel = this.val === s;
+                                    const cur = this.esActual(i) && !sel;
+                                    const t = (c, on) => b.classList.toggle(c, !!on);
+                                    t('bg-[#5D87FF]', sel); t('text-white', sel); t('font-semibold', sel); t('shadow-sm', sel);
+                                    t('bg-[#5D87FF]/20', cur); t('dark:bg-[#5D87FF]/30', cur); t('!text-[#5D87FF]', cur); t('dark:!text-[#5D87FF]', cur);
+                                    t('font-bold', cur); t('ring-2', cur); t('ring-[#5D87FF]/40', cur); t('dark:ring-[#5D87FF]/40', cur);
+                                    t('text-ink-600', !sel && !cur); t('dark:text-ink-300', !sel && !cur);
+                                });
+                            }
+                        }">
+                        <button @click="open = !open"
+                            class="flex items-center gap-2 px-3 h-9 rounded-lg border border-[#5D87FF]/20 dark:border-[#5D87FF]/40 bg-[#5D87FF]/10 dark:bg-[#5D87FF]/20 text-[#5D87FF] dark:text-[#5D87FF] hover:bg-[#5D87FF]/20 dark:hover:bg-[#5D87FF]/30 cursor-pointer transition-all shrink-0">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                            <span class="text-xs font-medium capitalize" x-text="meses[m] + ' ' + y"></span>
+                            <svg :class="{ 'rotate-180': open }" class="transition-transform" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+                        </button>
+                        <div x-show="open" @click.outside="open = false" x-cloak class="absolute z-50 mt-1.5" style="top:100%;left:0;width:260px">
+                            <div class="bg-white dark:bg-[#1C1F2E] rounded-xl shadow-lg dark:shadow-none border border-[#e5eaef] dark:border-white/[0.06] p-3">
+                                <div class="flex items-center justify-between mb-3">
+                                    <button class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-ink-100 dark:hover:bg-ink-800 text-ink-400" @click="y--">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+                                    </button>
+                                    <span class="text-xs font-semibold text-ink-900 dark:text-ink-100" x-text="y"></span>
+                                    <button class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-ink-100 dark:hover:bg-ink-800 text-ink-400" @click="y++">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+                                    </button>
+                                </div>
+                                <div class="grid grid-cols-3 gap-1.5" x-ref="mesGrid">
+                                    <template x-for="(nm, i) in meses" :key="i">
+                                        <button @click="seleccionar(i)"
+                                            class="mes-btn h-9 rounded-lg text-xs font-medium transition-all cursor-pointer text-ink-600 dark:text-ink-300 hover:bg-[#5D87FF]/10 dark:hover:bg-[#5D87FF]/20 hover:text-[#5D87FF] dark:hover:text-[#5D87FF]"
+                                            x-text="nm"></button>
+                                    </template>
+                                </div>
+                                <div class="flex items-center justify-between mt-2 pt-2 border-t border-ink-100 dark:border-ink-700">
+                                    <button @click="d = new Date(); y = d.getFullYear(); m = d.getMonth(); val = y + '-' + String(m + 1).padStart(2, '0'); $wire.set('filterMes', val); open = false" class="text-xs font-medium text-[#5D87FF]">Este Mes</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <button wire:click="$dispatch('openImportModal')" class="btn btn-outline btn-sm h-9 text-blue-600 border-blue-300 hover:bg-blue-50">
-                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-                    Importar
-                </button>
-                <span class="w-px h-5 bg-ink-200"></span>
-                <div class="flex items-center gap-3 text-[10px]">
-                    <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-sky-400"></span><span class="text-ink-500">Día</span></span>
-                    <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-blue-900"></span><span class="text-ink-500">Noche</span></span>
-                    <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span><span class="text-ink-500">24H</span></span>
-                    <span class="text-ink-300">|</span>
-                    <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-ember-400"></span><span class="text-ink-500">Falta</span></span>
-                    <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-red-500"></span><span class="text-ink-500">Descanso</span></span>
+                <div class="ml-auto flex items-center gap-3">
+                    <div class="flex items-center gap-3 text-[10px]">
+                        <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-sky-400"></span><span class="text-ink-500">Día</span></span>
+                        <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-blue-900"></span><span class="text-ink-500">Noche</span></span>
+                        <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span><span class="text-ink-500">24H</span></span>
+                        <span class="text-ink-300">|</span>
+                        <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-ember-400"></span><span class="text-ink-500">Falta</span></span>
+                        <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-red-500"></span><span class="text-ink-500">Descanso</span></span>
+                    </div>
+                    <div class="relative" style="overflow:visible" x-data="{ exportOpen: false }" @click.outside="exportOpen = false">
+                        <button @click="exportOpen = !exportOpen" class="btn btn-outline btn-sm h-9">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                            Exportar
+                        </button>
+                        <div x-show="exportOpen" x-cloak class="absolute right-0 mt-2 w-44 bg-white dark:bg-[#1C1F2E] border border-[#e5eaef] dark:border-white/[0.06] rounded-lg shadow-lg py-1 z-50">
+                            <button wire:click="exportarExcel" @click="exportOpen = false" class="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-ink-700 dark:text-white/70 hover:bg-ink-50 dark:hover:bg-white/[0.06]">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
+                                Excel (.xlsx)
+                            </button>
+                            <button wire:click="exportarPDF" @click="exportOpen = false" class="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-ink-700 dark:text-white/70 hover:bg-ink-50 dark:hover:bg-white/[0.06]">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 15h6"/><path d="M12 12v6"/></svg>
+                                PDF
+                            </button>
+                            <button wire:click="exportarCSV" @click="exportOpen = false" class="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-ink-700 dark:text-white/70 hover:bg-ink-50 dark:hover:bg-white/[0.06]">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="10" y2="13"/><line x1="14" y1="13" x2="16" y2="13"/><line x1="11" y1="13" x2="13" y2="13"/></svg>
+                                CSV
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <span class="text-xs text-ink-400 ml-auto">{{ count($this->personal) }} personas — {{ $dias }} días</span>
             </div>
         </div>
-    </div>
-
-    <div class="card overflow-x-auto">
-        <div class="card-body p-0" style="min-width: {{ 40 + $nameColumnWidth + $dias * 48 }}px">
-            <table class="w-full text-xs">
+        <div class="card">
+        @php
+            $_grid = collect($this->gridData);
+            $_faltas = $_grid->where('turno', 'FALTA')->count();
+            $_descansos = $_grid->where('turno', 'DESCANSO')->count();
+        @endphp
+        <div class="card-header">
+            <div class="flex items-center gap-1.5">
+                <span class="text-xs text-ink-500 dark:text-ink-400 font-medium flex items-center gap-1">
+                    @if($search)
+                        Resultados para '{{ $search }}'
+                        <span class="text-ink-300">({{ count($this->personal) }})</span>
+                    @else
+                        Asistencia
+                        <span class="text-ink-300">({{ count($this->personal) }})</span>
+                    @endif
+                    <span class="text-ink-300 mx-0.5">·</span>
+                    <span class="text-ink-400">Mes {{ $mes }}/{{ $anio }}</span>
+                    <span class="text-ink-300 mx-0.5">·</span>
+                    <span class="text-ink-400">Faltas {{ $_faltas }}</span>
+                    <span class="text-ink-300 mx-0.5">·</span>
+                    <span class="text-ink-400">Descansos {{ $_descansos }}</span>
+                    <span class="text-ink-300 mx-0.5">·</span>
+                    <span class="text-ink-600 dark:text-ink-300 font-semibold">Total {{ count($this->personal) }} personas — {{ $dias }} días</span>
+                </span>
+            </div>
+        </div>
+        <div class="card-body p-0 overflow-x-auto">
+            <table class="w-full text-xs table-fixed" style="min-width: {{ 40 + $nameColumnWidth + $dias * 48 }}px">
                 <thead>
                     <tr class="bg-ink-50 text-ink-600">
                         <th class="px-1 py-2.5 text-center sticky left-0 bg-ink-50 z-20 font-semibold text-[11px] uppercase tracking-wider" style="width:40px; min-width:40px">#</th>
@@ -56,7 +155,7 @@
                             $prevRol = $p['grupo_rol'];
                             $headerData = [
                                 'CHOFERES' => ['label' => 'CHOFERES', 'class' => 'text-ink-700 bg-ink-100'],
-                                'OLIMPO' => ['label' => 'OLIMPO', 'class' => 'text-ink-700 bg-ink-100'],
+                                'OLIMPO' => ['label' => 'RESIDENCIA', 'class' => 'text-ink-700 bg-ink-100'],
                                 'COCINA' => ['label' => 'COCINA', 'class' => 'text-amber-700 bg-amber-50'],
                                 'MANTENIMIENTO' => ['label' => 'MANTENIMIENTO', 'class' => 'text-green-700 bg-green-50'],
                                 'TORREÓN' => ['label' => 'TORREÓN', 'class' => 'text-purple-700 bg-purple-50'],
@@ -67,14 +166,15 @@
                         @endphp
                         @if($showHeader)
                             <tr class="{{ $h['class'] }}">
-                                <td colspan="{{ 2 + $dias }}" class="px-3 py-2 font-semibold text-xs uppercase tracking-wider">
+                                <td class="px-3 py-2 font-semibold text-xs uppercase tracking-wider sticky left-0 z-20 {{ $h['class'] }}" style="width:{{ 40 + $nameColumnWidth }}px; min-width:{{ 40 + $nameColumnWidth }}px">
                                     {{ $h['label'] }}
                                 </td>
+                                <td colspan="{{ $dias }}"></td>
                             </tr>
                         @endif
                         <tr class="border-t border-ink-100">
-                            <td class="px-1 py-1.5 text-xs text-ink-400 text-center sticky left-0 {{ $bg }} z-20" style="width:40px; min-width:40px">{{ $idx + 1 }}</td>
-                            <td class="px-2 py-1.5 text-sm sticky left-[40px] {{ $bg }} font-medium whitespace-nowrap" style="width:{{ $nameColumnWidth }}px; min-width:{{ $nameColumnWidth }}px">
+                            <td class="px-1 py-1.5 text-xs text-ink-400 text-center sticky left-0 bg-white dark:bg-ink-800 z-20" style="width:40px; min-width:40px">{{ $idx + 1 }}</td>
+                            <td class="px-2 py-1.5 text-sm sticky left-[40px] z-10 bg-white dark:bg-ink-800 font-medium whitespace-nowrap" style="width:{{ $nameColumnWidth }}px; min-width:{{ $nameColumnWidth }}px">
                                 {{ $p['nombre'] }}
                             </td>
                             @for($d = 1; $d <= $dias; $d++)
@@ -131,18 +231,18 @@
                 </tbody>
             </table>
         </div>
+        </div>
     </div>
 
     <div x-data x-show="$wire.editing !== null" x-cloak
         class="modal-overlay"
-        @click.self="$wire.cancelEdit()"
         x-transition:enter="transition ease-out duration-150"
         x-transition:enter-start="opacity-0"
         x-transition:enter-end="opacity-100"
         x-transition:leave="transition ease-in duration-100"
         x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0">
-        <div class="modal-card w-80 max-w-sm"
+        <div class="modal-card w-full max-w-sm mx-4"
             @click.stop
             x-transition:enter="transition ease-out duration-150"
             x-transition:enter-start="opacity-0 scale-95"
@@ -241,5 +341,4 @@
         </div>
     </div>
 
-    <livewire:olimpo.import-modal panel="asistencia" wire:key="import-asistencia" />
 </div>

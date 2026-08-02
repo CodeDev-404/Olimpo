@@ -14,6 +14,7 @@ class Personal extends Component
     public $showForm = false;
     public $editId = null;
     public $search = '';
+    public $filterEstado = '';
 
     public $nombre = '';
     public $segundoNombre = '';
@@ -71,19 +72,14 @@ class Personal extends Component
             ]);
 
         if ($this->search) {
-            $q = $this->search;
-            $query->where(function ($qry) use ($q) {
-                $qry->where('nombre', 'like', "%{$q}%")
-                    ->orWhere('segundo_nombre', 'like', "%{$q}%")
-                    ->orWhere('apellido_paterno', 'like', "%{$q}%")
-                    ->orWhere('apellido_materno', 'like', "%{$q}%")
-                    ->orWhere('alias', 'like', "%{$q}%")
-                    ->orWhere('cargo', 'like', "%{$q}%")
-                    ->orWhere('departamento', 'like', "%{$q}%")
-                    ->orWhere('documento', 'like', "%{$q}%")
-                    ->orWhere('telefono', 'like', "%{$q}%")
-                    ->orWhere('email', 'like', "%{$q}%");
-            });
+            $query->where(accent_insensitive_search([
+                'nombre', 'segundo_nombre', 'apellido_paterno', 'apellido_materno',
+                'alias', 'cargo', 'departamento', 'documento', 'telefono', 'email',
+            ], $this->search));
+        }
+
+        if ($this->filterEstado) {
+            $query->where('estado', $this->filterEstado);
         }
 
         $personal = $query->get()->toArray();
@@ -135,6 +131,12 @@ class Personal extends Component
         });
 
         return array_values($personal);
+    }
+
+    public function limpiarFiltros()
+    {
+        $this->search = '';
+        $this->filterEstado = '';
     }
 
     public function selectPersona($id)

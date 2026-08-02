@@ -5,8 +5,8 @@ use App\Livewire\Olimpo\Dashboard;
 use App\Livewire\Olimpo\Ocurrencias;
 use App\Livewire\Olimpo\Asistencia;
 use App\Livewire\Olimpo\Personal;
-use App\Livewire\Olimpo\Recordatorios;
 use App\Livewire\Olimpo\Cumpleanos;
+use App\Livewire\Olimpo\OtrosPendientes;
 use App\Livewire\Olimpo\RegistroPalm;
 use App\Livewire\Olimpo\ControlVehiculos;
 use App\Livewire\Olimpo\Configuracion;
@@ -19,8 +19,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/olimpo/ocurrencias', Ocurrencias::class)->name('olimpo.ocurrencias');
     Route::get('/olimpo/asistencia', Asistencia::class)->name('olimpo.asistencia');
     Route::get('/olimpo/personal', Personal::class)->name('olimpo.personal');
-    Route::get('/olimpo/recordatorios', Recordatorios::class)->name('olimpo.recordatorios');
+    Route::redirect('/olimpo/recordatorios', '/olimpo/cumpleanos')->name('olimpo.recordatorios');
     Route::get('/olimpo/cumpleanos', Cumpleanos::class)->name('olimpo.cumpleanos');
+    Route::get('/olimpo/otros-pendientes', OtrosPendientes::class)->name('olimpo.otros-pendientes');
     Route::get('/olimpo/registro-palm', RegistroPalm::class)->name('olimpo.registro-palm');
     Route::get('/olimpo/control-vehiculos', ControlVehiculos::class)->name('olimpo.control-vehiculos');
     Route::get('/olimpo/configuracion', Configuracion::class)->name('olimpo.config');
@@ -36,13 +37,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         if ($scope === 'ocurrencias' || $scope === 'todos') {
             $ocurrencias = \App\Models\Ocurrencia::with('persona')
-                ->where('persona_nombre', 'like', "%{$q}%")
-                ->orWhere('vehiculo', 'like', "%{$q}%")
-                ->orWhere('destino', 'like', "%{$q}%")
-                ->orWhere('motivo', 'like', "%{$q}%")
-                ->orWhere('detalles', 'like', "%{$q}%")
-                ->orWhere('observacion', 'like', "%{$q}%")
-                ->orWhere('otro', 'like', "%{$q}%")
+                ->where(accent_insensitive_search([
+                    'persona_nombre', 'vehiculo', 'destino', 'motivo',
+                    'detalles', 'observacion', 'otro', 'nota_texto', 'fecha',
+                ], $q))
                 ->orderBy('fecha', 'desc')
                 ->orderBy('id', 'desc')
                 ->limit(30)
@@ -69,11 +67,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         }
 
         if ($scope === 'control-vehiculos' || $scope === 'todos') {
-            $vehiculos = \App\Models\ControlVehiculo::where('chofer', 'like', "%{$q}%")
-                ->orWhere('placa', 'like', "%{$q}%")
-                ->orWhere('marca', 'like', "%{$q}%")
-                ->orWhere('modelo', 'like', "%{$q}%")
-                ->orWhere('observacion', 'like', "%{$q}%")
+            $vehiculos = \App\Models\ControlVehiculo::where(accent_insensitive_search([
+                'chofer', 'placa', 'marca', 'modelo', 'observacion',
+            ], $q))
                 ->orderBy('fecha', 'desc')
                 ->limit(20)
                 ->get()
@@ -117,6 +113,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         }
         return response()->download($path);
     })->name('olimpo.download-convert');
+
+    Route::get('/olimpo/download-pdf/{filename}', function ($filename) {
+        $path = storage_path('app/temp/pdf/' . basename($filename));
+        if (!file_exists($path)) {
+            abort(404, 'Archivo no encontrado');
+        }
+        return response()->download($path);
+    })->name('olimpo.download-pdf');
 
     Route::post('/olimpo/upload-base64', function (\Illuminate\Http\Request $request) {
         $name = $request->header('X-File-Name', 'file');

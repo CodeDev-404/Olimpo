@@ -20,7 +20,7 @@
                     </thead>
                     <tbody>
                         @forelse($camionetas as $i => $c)
-                            <tr>
+                            <tr class="{{ $i % 2 === 1 ? 'table-row-zebra' : '' }}">
                                 <td class="font-mono text-ink-400 text-xs">{{ $i + 1 }}</td>
                                 <td class="font-mono font-medium text-ink-900">@if(!empty($c['placa'])){{ $c['placa'] }}@else<span class="text-ink-300">—</span>@endif</td>
                                 <td>@if(!empty($c['marca'])){{ $c['marca'] }}@else<span class="text-ink-300">—</span>@endif</td>

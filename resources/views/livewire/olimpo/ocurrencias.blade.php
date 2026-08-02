@@ -60,7 +60,7 @@ if ($filterFecha) {
                 </span>
             </div>
 
-            <div x-show="filtersOpen" wire:ignore x-cloak class="flex items-center gap-3 filter-slide-in">
+            <div x-show="filtersOpen" wire:ignore x-cloak class="flex flex-nowrap items-center gap-2 sm:gap-3 filter-slide-in overflow-x-auto pb-80 -mb-80">
 
                 {{-- Fecha A2: input + botón calendario --}}
                 <div class="relative" x-data="{ 
@@ -68,16 +68,16 @@ if ($filterFecha) {
                         m: {{ $calM }}, 
                         y: {{ $calY }}, 
                         val: '{{ $filterFecha }}',
-                        generateDays(y,m){const d=[];const f=new Date(y,m,1).getDay();for(let i=0;i<35;i++)d.push(new Date(y,m,1-f+i));return d},
+                        generateDays(y,m){const d=[];const f=new Date(y,m,1).getDay();for(let i=0;i<42;i++)d.push(new Date(y,m,1-f+i));return d},
                         fmt(d){var dd=d.getDate(),mm=d.getMonth()+1;return(dd<10?'0':'')+dd+'/'+(mm<10?'0':'')+mm+'/'+d.getFullYear()},
                         isSel(d){
                             return this.val && this.fmt(d)===this.val;
                         }
                     }"
-                     x-init="$watch('val', v => $wire.set('filterFecha', v))"
-                     @filter-reset.window="if($event.detail.reset){val='';var d=new Date();m=d.getMonth();y=d.getFullYear()}else{var f=$wire.filterFecha||'';if(val!==f)val=f;if(!f){var d=new Date();m=d.getMonth();y=d.getFullYear()}}">
+                     @filter-reset.window="if($event.detail.reset){val='';m=(new Date()).getMonth();y=(new Date()).getFullYear()}else{if(val!==($wire.filterFecha||''))val=$wire.filterFecha||'';if(!$wire.filterFecha){m=(new Date()).getMonth();y=(new Date()).getFullYear()}}"
+                     @filter-fecha-reset.window="val='';m=(new Date()).getMonth();y=(new Date()).getFullYear()">
                     <div class="flex gap-1.5">
-                        <input type="text" x-model="val" @focus="open = true"
+                        <input type="text" x-model="val" @focus="open = true" @input="$wire.set('filterFecha', $el.value); if ($el.value) window.dispatchEvent(new CustomEvent('filter-mes-reset'))"
                             class="input-field w-28 h-9" placeholder="dd/mm/aaaa" />
                         <button @click="open = !open"
                             class="w-9 h-9 flex items-center justify-center rounded-lg transition-all border border-[#5D87FF]/20 dark:border-[#5D87FF]/40 bg-[#5D87FF]/10 dark:bg-[#5D87FF]/20 text-[#5D87FF] dark:text-[#5D87FF] hover:bg-[#5D87FF]/20 dark:hover:bg-[#5D87FF]/30 cursor-pointer shrink-0">
@@ -105,16 +105,16 @@ if ($filterFecha) {
                                     <div class="w-[30px] h-[30px] flex items-center justify-center rounded-lg text-xs transition-all"
                                         :class="{
                                             'bg-[#5D87FF] text-white font-semibold shadow-sm': isSel(d),
-                                            'border border-[#5D87FF] dark:border-[#5D87FF]': fmt(d)===fmt(new Date()) && d.getMonth()===m,
+                                            'bg-[#5D87FF]/20 dark:bg-[#5D87FF]/30 !text-[#5D87FF] dark:!text-[#5D87FF] font-bold ring-2 ring-[#5D87FF]/40 dark:ring-[#5D87FF]/40': !isSel(d) && fmt(d)===fmt(new Date()) && d.getMonth()===m,
                                             'text-ink-300 dark:text-ink-600 cursor-default': d.getMonth()!==m,
                                             'text-ink-600 dark:text-ink-300 cursor-pointer hover:bg-[#5D87FF]/10 dark:hover:bg-[#5D87FF]/20 hover:text-[#5D87FF] dark:hover:text-[#5D87FF]': d.getMonth()===m
                                         }"
-                                        @click="if(d.getMonth()===m){val=fmt(d);open=false}" x-text="d.getDate()"></div>
+                                        @click="if(d.getMonth()===m){val=fmt(d);open=false;$wire.set('filterFecha',fmt(d));window.dispatchEvent(new CustomEvent('filter-mes-reset'))}" x-text="d.getDate()"></div>
                                 </template>
                             </div>
                             <div class="flex items-center justify-between mt-2 pt-2 border-t border-ink-100 dark:border-ink-700">
-                                <button @click="open=false; val=''; var d=new Date(); m=d.getMonth(); y=d.getFullYear(); $wire.set('filterFecha', '')" class="text-xs text-ink-400 hover:text-ink-600 dark:hover:text-ink-300">Limpiar</button>
-                                <button @click="var d=new Date(),dd=d.getDate(),mm=d.getMonth()+1; val=(dd<10?'0':'')+dd+'/'+(mm<10?'0':'')+mm+'/'+d.getFullYear(); open=false" class="text-xs font-medium text-[#5D87FF]">Hoy</button>
+                                <button @click="open=false; val=''; m=(new Date()).getMonth(); y=(new Date()).getFullYear(); $wire.set('filterFecha', ''); window.dispatchEvent(new CustomEvent('filter-mes-reset'))" class="text-xs text-ink-400 hover:text-ink-600 dark:hover:text-ink-300">Limpiar</button>
+                                <button @click="val=fmt(new Date()); open=false; $wire.set('filterFecha', fmt(new Date())); window.dispatchEvent(new CustomEvent('filter-mes-reset'))" class="text-xs font-medium text-[#5D87FF]">Hoy</button>
                             </div>
                         </div>
                     </div>
@@ -122,8 +122,7 @@ if ($filterFecha) {
 
                 {{-- Turno B2: custom dropdown con color --}}
                 <div x-data="{ open: false, sel: '{{ $filterTurno ?: 'Todos' }}', opts: ['Todos','DÍA','NOCHE'] }"
-                     x-init="$watch('sel', v => $wire.set('filterTurno', v === 'Todos' ? '' : v))"
-                     @filter-reset.window="if($event.detail.reset){sel='Todos'}else{var s=$wire.filterTurno||'Todos';if(sel!==s)sel=s}"
+                     @filter-reset.window="if($event.detail.reset){sel='Todos'}else{if(sel!==($wire.filterTurno||'Todos'))sel=$wire.filterTurno||'Todos'}"
                      class="relative">
                     <div class="input-field flex items-center gap-2 cursor-pointer h-9 !px-[10px] min-w-[90px]" @click="open = !open">
                         <span class="w-2 h-2 rounded-full shrink-0" :style="{ background: sel==='DÍA'?'#f59e0b':sel==='NOCHE'?'#6366f1':'rgba(161,161,170,0.3)' }"></span>
@@ -135,7 +134,7 @@ if ($filterFecha) {
                             <template x-for="o in opts" :key="o">
                                 <div class="flex items-center gap-2 px-3 py-2 text-xs cursor-pointer transition-colors text-ink-600 dark:text-ink-400 hover:bg-[#5D87FF]/10 dark:hover:bg-[#5D87FF]/20 hover:text-[#5D87FF] dark:hover:text-[#5D87FF]"
                                     :class="{ 'text-[#5D87FF] dark:text-[#5D87FF] font-medium bg-[#5D87FF]/10 dark:bg-[#5D87FF]/20': sel === o }"
-                                    @click="sel = o; open = false">
+                                    @click="sel = o; open = false; $wire.set('filterTurno', o === 'Todos' ? '' : o)">
                                     <span class="w-2 h-2 rounded-full shrink-0" :style="{ background: o==='DÍA'?'#f59e0b':o==='NOCHE'?'#6366f1':'rgba(161,161,170,0.3)' }"></span>
                                     <span x-text="o"></span>
                                     <svg x-show="sel === o" class="ml-auto shrink-0" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#5D87FF" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
@@ -149,8 +148,8 @@ if ($filterFecha) {
                 <div class="flex items-center gap-1.5">
                     <span class="text-[11px] text-ink-500 dark:text-ink-400 font-semibold uppercase tracking-wider">Mes:</span>
                     <div x-data="{ open: false, sel: '{{ $filterMesDesde }}', opts: ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'] }"
-                         x-init="$watch('sel', v => $wire.set('filterMesDesde', v))"
-                         @filter-reset.window="if($event.detail.reset){sel=''}else{var f=$wire.filterMesDesde||'';if(sel!==f)sel=f}"
+                         @filter-reset.window="if($event.detail.reset){sel=''}else{if(sel!==($wire.filterMesDesde||''))sel=$wire.filterMesDesde||''}"
+                         @filter-mes-reset.window="sel=''"
                          class="relative">
                         <div class="input-field flex items-center gap-2 cursor-pointer h-9 !px-[10px] min-w-[90px]" @click="open = !open">
                             <span class="flex-1 text-xs font-medium whitespace-nowrap text-ink-700 dark:text-ink-300" x-text="sel ? opts[sel] : 'Desde'"></span>
@@ -162,7 +161,7 @@ if ($filterFecha) {
                                     <div class="flex items-center gap-2 px-3 py-2 text-xs cursor-pointer transition-colors text-ink-600 dark:text-ink-400 hover:bg-[#5D87FF]/10 dark:hover:bg-[#5D87FF]/20 hover:text-[#5D87FF] dark:hover:text-[#5D87FF]"
                                         :class="{ 'text-[#5D87FF] dark:text-[#5D87FF] font-medium bg-[#5D87FF]/10 dark:bg-[#5D87FF]/20': sel == i }"
                                         x-show="i > 0"
-                                        @click="sel = i; open = false">
+                                        @click="sel = i; open = false; $wire.set('filterMesDesde', String(i)); if (i) window.dispatchEvent(new CustomEvent('filter-fecha-reset'))">
                                         <span x-text="o"></span>
                                         <svg x-show="sel == i" class="ml-auto shrink-0" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#5D87FF" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                                     </div>
@@ -172,8 +171,8 @@ if ($filterFecha) {
                     </div>
                     <span class="text-ink-300 text-xs">—</span>
                     <div x-data="{ open: false, sel: '{{ $filterMesHasta }}', opts: ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'] }"
-                         x-init="$watch('sel', v => $wire.set('filterMesHasta', v))"
-                         @filter-reset.window="if($event.detail.reset){sel=''}else{var f=$wire.filterMesHasta||'';if(sel!==f)sel=f}"
+                         @filter-reset.window="if($event.detail.reset){sel=''}else{if(sel!==($wire.filterMesHasta||''))sel=$wire.filterMesHasta||''}"
+                         @filter-mes-reset.window="sel=''"
                          class="relative">
                         <div class="input-field flex items-center gap-2 cursor-pointer h-9 !px-[10px] min-w-[90px]" @click="open = !open">
                             <span class="flex-1 text-xs font-medium whitespace-nowrap text-ink-700 dark:text-ink-300" x-text="sel ? opts[sel] : 'Hasta'"></span>
@@ -185,7 +184,7 @@ if ($filterFecha) {
                                     <div class="flex items-center gap-2 px-3 py-2 text-xs cursor-pointer transition-colors text-ink-600 dark:text-ink-400 hover:bg-[#5D87FF]/10 dark:hover:bg-[#5D87FF]/20 hover:text-[#5D87FF] dark:hover:text-[#5D87FF]"
                                         :class="{ 'text-[#5D87FF] dark:text-[#5D87FF] font-medium bg-[#5D87FF]/10 dark:bg-[#5D87FF]/20': sel == i }"
                                         x-show="i > 0"
-                                        @click="sel = i; open = false">
+                                        @click="sel = i; open = false; $wire.set('filterMesHasta', String(i)); if (i) window.dispatchEvent(new CustomEvent('filter-fecha-reset'))">
                                         <span x-text="o"></span>
                                         <svg x-show="sel == i" class="ml-auto shrink-0" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#5D87FF" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                                     </div>
@@ -199,8 +198,7 @@ if ($filterFecha) {
                 <div class="flex items-center gap-1.5">
                     <span class="text-[11px] text-ink-500 dark:text-ink-400 font-semibold uppercase tracking-wider">Hora:</span>
                     <div x-data="{ open: false, sel: '{{ $filterHoraDesde }}', opts: Array.from({length:24},(_,i)=>String(i).padStart(2,'0')+':00') }"
-                         x-init="$watch('sel', v => $wire.set('filterHoraDesde', v))"
-                         @filter-reset.window="if($event.detail.reset){sel=''}else{var f=$wire.filterHoraDesde||'';if(sel!==f)sel=f}"
+                         @filter-reset.window="if($event.detail.reset){sel=''}else{if(sel!==($wire.filterHoraDesde||''))sel=$wire.filterHoraDesde||''}"
                          class="relative">
                         <div class="input-field flex items-center gap-2 cursor-pointer h-9 !px-[10px] min-w-[90px]" @click="open = !open">
                             <span class="flex-1 text-xs font-medium whitespace-nowrap text-ink-700 dark:text-ink-300" x-text="sel || 'Desde'"></span>
@@ -211,7 +209,7 @@ if ($filterFecha) {
                                 <template x-for="o in opts" :key="o">
                                     <div class="flex items-center gap-2 px-3 py-2 text-xs cursor-pointer transition-colors text-ink-600 dark:text-ink-400 hover:bg-[#5D87FF]/10 dark:hover:bg-[#5D87FF]/20 hover:text-[#5D87FF] dark:hover:text-[#5D87FF]"
                                         :class="{ 'text-[#5D87FF] dark:text-[#5D87FF] font-medium bg-[#5D87FF]/10 dark:bg-[#5D87FF]/20': sel === o }"
-                                        @click="sel = o; open = false">
+                                        @click="sel = o; open = false; $wire.set('filterHoraDesde', o)">
                                         <span x-text="o"></span>
                                         <svg x-show="sel === o" class="ml-auto shrink-0" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#5D87FF" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                                     </div>
@@ -221,8 +219,7 @@ if ($filterFecha) {
                     </div>
                     <span class="text-ink-300 text-xs">—</span>
                     <div x-data="{ open: false, sel: '{{ $filterHoraHasta }}', opts: Array.from({length:24},(_,i)=>String(i).padStart(2,'0')+':00') }"
-                         x-init="$watch('sel', v => $wire.set('filterHoraHasta', v))"
-                         @filter-reset.window="if($event.detail.reset){sel=''}else{var f=$wire.filterHoraHasta||'';if(sel!==f)sel=f}"
+                         @filter-reset.window="if($event.detail.reset){sel=''}else{if(sel!==($wire.filterHoraHasta||''))sel=$wire.filterHoraHasta||''}"
                          class="relative">
                         <div class="input-field flex items-center gap-2 cursor-pointer h-9 !px-[10px] min-w-[90px]" @click="open = !open">
                             <span class="flex-1 text-xs font-medium whitespace-nowrap text-ink-700 dark:text-ink-300" x-text="sel || 'Hasta'"></span>
@@ -233,7 +230,7 @@ if ($filterFecha) {
                                 <template x-for="o in opts" :key="o">
                                     <div class="flex items-center gap-2 px-3 py-2 text-xs cursor-pointer transition-colors text-ink-600 dark:text-ink-400 hover:bg-[#5D87FF]/10 dark:hover:bg-[#5D87FF]/20 hover:text-[#5D87FF] dark:hover:text-[#5D87FF]"
                                         :class="{ 'text-[#5D87FF] dark:text-[#5D87FF] font-medium bg-[#5D87FF]/10 dark:bg-[#5D87FF]/20': sel === o }"
-                                        @click="sel = o; open = false">
+                                        @click="sel = o; open = false; $wire.set('filterHoraHasta', o)">
                                         <span x-text="o"></span>
                                         <svg x-show="sel === o" class="ml-auto shrink-0" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#5D87FF" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                                     </div>
@@ -249,7 +246,11 @@ if ($filterFecha) {
                     Limpiar filtros
                 </button>
             </div>
-            <button wire:click="nueva" class="btn btn-primary btn-sm h-9 ml-auto">
+            <button wire:click="$dispatchTo('olimpo.ocurrencias-table', 'activate-nota-form')" class="btn btn-warning btn-sm h-9 ml-auto">
+                <i data-lucide="sticky-note" class="w-4 h-4 mr-1.5 shrink-0"></i>
+                Nota
+            </button>
+            <button wire:click="nueva" class="btn btn-primary btn-sm h-9">
                 <i data-lucide="plus" class="w-4 h-4 mr-1.5 shrink-0"></i>
                 Nueva Ocurrencia
             </button>
@@ -270,7 +271,6 @@ if ($filterFecha) {
 
     <div x-show="showPop" x-cloak
         class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-        @click.self="showPop = false"
         x-transition:enter="transition ease-out duration-150"
         x-transition:enter-start="opacity-0"
         x-transition:enter-end="opacity-100">
@@ -291,7 +291,6 @@ if ($filterFecha) {
 
     @if($showForm)
     <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-        @keydown.escape.window="$wire.cancel"
         x-data
         x-transition:enter="transition-all duration-200 ease-out"
         x-transition:enter-start="opacity-0"

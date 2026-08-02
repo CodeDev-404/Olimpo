@@ -3,8 +3,27 @@ import { createIcons, icons } from 'lucide';
 function initLucide() {
     createIcons({ icons });
 }
-document.addEventListener('DOMContentLoaded', initLucide);
-document.addEventListener('livewire:navigated', initLucide);
+
+function updateSidebarActive() {
+    const links = document.querySelectorAll('[data-sidebar-link]');
+    const currentHref = window.location.href;
+    links.forEach(a => {
+        const match = currentHref.startsWith(a.href);
+        a.classList.toggle('bg-[#5D87FF]', match);
+        a.classList.toggle('text-white', match);
+        a.classList.toggle('font-semibold', match);
+        a.classList.toggle('shadow-sm', match);
+        a.classList.toggle('text-ink-600', !match);
+        a.classList.toggle('hover:text-ink-900', !match);
+        a.classList.toggle('hover:bg-ink-100', !match);
+        a.classList.toggle('dark:text-white/60', !match);
+        a.classList.toggle('dark:hover:text-white', !match);
+        a.classList.toggle('dark:hover:bg-white/[0.06]', !match);
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => { initLucide(); updateSidebarActive(); });
+document.addEventListener('livewire:navigated', () => { initLucide(); updateSidebarActive(); });
 let morphRaf = null;
 document.addEventListener('livewire:init', () => {
     Livewire.hook('morph.updated', () => {
@@ -15,6 +34,56 @@ document.addEventListener('livewire:init', () => {
             });
         }
     });
+});
+
+document.addEventListener('alpine:init', () => {
+    const rowMenu = {
+        openId: null,
+        top: 0,
+        left: 0,
+        right: null,
+        anchorEl: null,
+        reposition() {
+            if (!this.openId || !this.anchorEl) return;
+            let r = this.anchorEl.getBoundingClientRect();
+            if (r.bottom < 0 || r.top > window.innerHeight) {
+                this.close();
+                return;
+            }
+            const PH = 170;
+            this.top = (r.bottom + 4 + PH <= window.innerHeight || r.top - PH - 4 < 8)
+                ? r.bottom + 4
+                : r.top - PH - 4;
+            if (r.left >= 200) {
+                this.left = null;
+                this.right = Math.max(8, window.innerWidth - r.left + 4);
+            } else {
+                this.right = null;
+                this.left = Math.max(8, r.right + 4);
+            }
+        },
+        toggle(id, el) {
+            if (this.openId === id) {
+                this.close();
+                return;
+            }
+            this.anchorEl = el;
+            this.openId = id;
+            this.reposition();
+        },
+        close() {
+            this.openId = null;
+            this.anchorEl = null;
+        },
+        opened(id) {
+            return this.openId === id;
+        },
+    };
+    Alpine.store('rowMenu', rowMenu);
+    const rowMenuStore = Alpine.store('rowMenu');
+    window.addEventListener('scroll', () => rowMenuStore.reposition(), { capture: true, passive: true });
+    window.addEventListener('resize', () => rowMenuStore.reposition(), { passive: true });
+    document.addEventListener('click', () => rowMenuStore.close());
 });
 
 window.uploadFileBase64 = function(file, wire, el) {

@@ -6,6 +6,9 @@ use Livewire\Component;
 use Livewire\Attributes\Computed;
 use App\Models\Personal;
 use App\Models\Asistencia as AsistenciaModel;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\AsistenciaExport;
 use Illuminate\Support\Facades\DB;
 
 class Asistencia extends Component
@@ -14,6 +17,7 @@ class Asistencia extends Component
     public $anio;
     public $dias = 31;
     public $filterMes;
+    public $search = '';
     public $nameColumnWidth = 150;
     public $editing = null;
     public $editValue = '';
@@ -114,6 +118,13 @@ class Asistencia extends Component
 
             return strcasecmp($a['nombre'], $b['nombre']);
         });
+
+        if ($this->search !== '') {
+            $term = unaccent_string(mb_strtolower(trim($this->search)));
+            $personal = array_values(array_filter($personal, function ($p) use ($term) {
+                return str_contains(unaccent_string(mb_strtolower($p['nombre'])), $term);
+            }));
+        }
 
         return array_values($personal);
     }
@@ -457,10 +468,57 @@ class Asistencia extends Component
         $this->loadGrid();
     }
 
-    public function guardarMes()
+    private function getExportRows(): array
     {
-        if ($this->editing) $this->saveCell();
-        $this->dispatch('notify', message: 'Asistencia del mes guardada.', type: 'success');
+        return \DB::table('asistencia')
+            ->whereRaw("SUBSTR(fecha, 4, 2) = ? AND SUBSTR(fecha, 7, 4) = ?", [$this->mes, (string)$this->anio])
+            ->orderBy('persona_nombre')
+            ->orderBy('fecha')
+            ->get()
+            ->map(fn($r) => (array)$r)
+            ->all();
+    }
+
+    public function exportarExcel()
+    {
+        $rows = $this->getExportRows();
+        if (empty($rows)) {
+            $this->dispatch('notify', message: 'No hay datos para exportar.', type: 'warning');
+            return;
+        }
+        return Excel::download(new AsistenciaExport($rows), 'Asistencia_' . $this->anio . '_' . $this->mes . '.xlsx');
+    }
+
+    public function exportarPDF()
+    {
+        $rows = $this->getExportRows();
+        if (empty($rows)) {
+            $this->dispatch('notify', message: 'No hay datos para exportar.', type: 'warning');
+            return;
+        }
+        $pdf = Pdf::loadView('exports.asistencia-pdf', [
+            'rows' => $rows,
+            'columns' => \App\Exports\AsistenciaExport::columnMap(),
+            'fecha' => $this->mes . '/' . $this->anio,
+        ]);
+        return response()->streamDownload(fn() => print($pdf->output()), 'Asistencia_' . $this->anio . '_' . $this->mes . '.pdf');
+    }
+
+    public function exportarCSV()
+    {
+        $rows = $this->getExportRows();
+        if (empty($rows)) {
+            $this->dispatch('notify', message: 'No hay datos para exportar.', type: 'warning');
+            return;
+        }
+        $cols = array_keys(\App\Exports\AsistenciaExport::columnMap());
+        $headers = array_values(\App\Exports\AsistenciaExport::columnMap());
+        $csv = implode(',', $headers) . "\n";
+        foreach ($rows as $row) {
+            $vals = array_map(fn($c) => '"' . str_replace('"', '""', $row[$c] ?? '') . '"', $cols);
+            $csv .= implode(',', $vals) . "\n";
+        }
+        return response()->streamDownload(fn() => print($csv), 'Asistencia_' . $this->anio . '_' . $this->mes . '.csv', ['Content-Type' => 'text/csv']);
     }
 
     public function render()

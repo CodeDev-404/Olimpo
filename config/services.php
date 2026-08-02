@@ -47,4 +47,21 @@ return [
         'token' => env('KMENTE_API_TOKEN'),
     ],
 
+    'gemini' => [
+        'api_key' => env('GEMINI_API_KEY'),
+        'model' => env('GEMINI_MODEL', 'gemini-3.5-flash'),
+    ],
+
+    'groq' => [
+        'api_key' => env('GROQ_API_KEY'),
+        'model' => env('GROQ_MODEL', 'llama-3.3-70b-versatile'),
+        'base_url' => env('GROQ_BASE_URL', 'https://api.groq.com/openai/v1/chat/completions'),
+    ],
+
+    'nvidia' => [
+        'api_key' => env('NVIDIA_API_KEY'),
+        'model' => env('NVIDIA_MODEL', 'meta/llama-3.3-70b-instruct'),
+        'base_url' => env('NVIDIA_BASE_URL', 'https://integrate.api.nvidia.com/v1/chat/completions'),
+    ],
+
 ];

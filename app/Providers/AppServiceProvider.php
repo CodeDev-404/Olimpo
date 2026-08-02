@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use Illuminate\Database\SQLiteConnection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -19,6 +21,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        $connection = DB::connection();
+
+        if ($connection instanceof SQLiteConnection) {
+            $connection->getPdo()->sqliteCreateFunction('unaccent', function ($value) {
+                return unaccent_string($value);
+            });
+        }
     }
 }

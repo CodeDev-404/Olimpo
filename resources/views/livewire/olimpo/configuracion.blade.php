@@ -29,7 +29,7 @@
                 @endif
                 @if($showTipoForm)
                     <div class="bg-[#f4f6f9] dark:bg-white/[0.04] border border-[#e5eaef] dark:border-white/[0.06] p-4 rounded-lg mb-4">
-                        <div class="grid grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-[11px] text-ink-500 font-semibold uppercase tracking-wider mb-1">Nombre</label>
                                 <input type="text" wire:model="tipoNombre" class="input-field w-full">
@@ -91,11 +91,11 @@
                     <button wire:click="newCargo" class="btn btn-primary mb-4">+ Nuevo Cargo</button>
                 @endif
                 @if($showCargoForm)
-                    <div class="bg-[#f4f6f9] dark:bg-white/[0.04] border border-[#e5eaef] dark:border-white/[0.06] p-4 rounded-lg mb-4 flex gap-2 items-start dark:border-ink-600">
-                        <div class="flex-1 space-y-2">
+                    <div class="bg-[#f4f6f9] dark:bg-white/[0.04] border border-[#e5eaef] dark:border-white/[0.06] p-4 rounded-lg mb-4 flex flex-wrap gap-2 items-start dark:border-ink-600">
+                        <div class="flex-1 space-y-2 min-w-[200px]">
                             <input type="text" wire:model="cargoNombre" class="input-field w-full" placeholder="Nombre del cargo">
-                            <div class="flex gap-2">
-                                <select wire:model="cargoGrupo" class="input-field flex-1">
+                            <div class="flex flex-wrap gap-2">
+                                <select wire:model="cargoGrupo" class="input-field flex-1 min-w-[120px]">
                                     <option value="OLIMPO">OLIMPO</option>
                                     <option value="CHOFERES">CHOFERES</option>
                                     <option value="COCINA">COCINA</option>
@@ -143,7 +143,7 @@
                 @endif
                 @if($showCamForm)
                     <div class="bg-[#f4f6f9] dark:bg-white/[0.04] border border-[#e5eaef] dark:border-white/[0.06] p-4 rounded-lg mb-4">
-                        <div class="grid grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-[11px] text-ink-500 font-semibold uppercase tracking-wider mb-1">Placa *</label>
                                 <input type="text" wire:model="camPlaca" class="input-field w-full">
@@ -202,7 +202,7 @@
                 @endif
                 @if($showUserForm)
                     <div class="bg-[#f4f6f9] dark:bg-white/[0.04] border border-[#e5eaef] dark:border-white/[0.06] p-4 rounded-lg mb-4">
-                        <div class="grid grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-[11px] text-ink-500 font-semibold uppercase tracking-wider mb-1">Usuario *</label>
                                 <input type="text" wire:model="userUsername" class="input-field w-full">

@@ -75,10 +75,9 @@
          x-show="open"
          x-cloak
          x-transition.opacity.duration.200ms
-         class="fixed inset-0 z-50 flex items-center justify-center bg-ink-900/60 p-4"
-         @keydown.escape.window="open = false">
+         class="fixed inset-0 z-50 flex items-center justify-center bg-ink-900/60 p-4">
         <div class="bg-white dark:bg-[#1C1F2E] rounded-xl shadow-lg w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden"
-             @click.outside="open = false">
+             >
             {{-- Header --}}
             <div class="flex items-center justify-between px-6 py-4 border-b border-[#e5eaef] dark:border-white/[0.06] shrink-0">
                 <h3 class="text-base font-bold text-ink-900 dark:text-white tracking-wide font-display">{{ $modalTitle }}</h3>
@@ -92,7 +91,7 @@
                     {{-- Premium modal with photo/firma sidebar --}}
                     <div class="flex flex-col lg:flex-row gap-6">
                         <div class="flex-1 min-w-0">
-                            <table class="table-adminlte w-full">
+                            <table class="table-adminlte table-zebra-nth w-full">
                                 <thead>
                                     <tr>
                                         <th class="w-2/5">Campo</th>
@@ -172,7 +171,7 @@
                         </thead>
                         <tbody>
                             @forelse(collect($resultado)->except(['_proveedor', 'foto', 'firma', '_token'])->filter(fn($v) => $v !== null && $v !== '') as $campo => $valor)
-                                <tr>
+                                <tr class="{{ $loop->odd ? 'table-row-zebra' : '' }}">
                                     <td class="font-semibold text-ink-400 text-[11px] uppercase tracking-wider">{{ preg_replace('/([a-z])([A-Z])/', '$1 $2', $campo) }}</td>
                                     <td>
                                         @if(is_array($valor) || is_object($valor))
@@ -219,7 +218,7 @@
                 </thead>
                 <tbody>
                     @forelse($historial as $i => $h)
-                        <tr class="cursor-pointer" wire:click="verResultado({{ $i }})">
+                        <tr class="cursor-pointer {{ $i % 2 === 1 ? 'table-row-zebra' : '' }}" wire:click="verResultado({{ $i }})">
                             <td class="font-mono text-ink-400 text-xs">{{ $i + 1 }}</td>
                             <td>
                                 @if(!empty($h['tipo']))

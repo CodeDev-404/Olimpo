@@ -5,7 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>OLIMPO — {{ $title ?? 'Sistema de Control' }}</title>
-    <script>if (localStorage.getItem('dark') === 'true') document.documentElement.classList.add('dark')</script>
+    <script data-navigate-track>
+        if (localStorage.getItem('dark') === 'true') document.documentElement.classList.add('dark');
+    </script>
+    <script>
+        document.addEventListener('livewire:navigated', function () {
+            if (localStorage.getItem('dark') === 'true') document.documentElement.classList.add('dark');
+        });
+    </script>
     <link rel="icon" type="image/jpeg" href="/favicon.ico">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,17 +31,41 @@
 
         <div class="flex-1 flex flex-col overflow-hidden">
             @persist('header')
-            <header class="bg-white dark:bg-[#1C1F2E] border-b border-[#e5eaef] dark:border-white/[0.06] h-20 flex items-center gap-4 px-5 lg:px-6 shrink-0 text-ink-600 dark:text-white/60">
+            <header class="bg-white dark:bg-[#141e36] border-b border-[#e5eaef] dark:border-white/[0.06] h-14 md:h-16 lg:h-20 flex items-center gap-1 md:gap-2 lg:gap-4 px-2.5 md:px-4 lg:px-6 shrink-0 text-ink-600 dark:text-white/60">
                 <div class="flex items-center gap-3">
-        <button type="button"
-            onclick="document.querySelector('.sidebar').classList.toggle('-translate-x-full'); var ov = document.querySelector('.sidebar-overlay'); if (ov) { if (document.querySelector('.sidebar').classList.contains('-translate-x-full')) { ov.classList.add('hidden'); } else { ov.classList.remove('hidden'); } }"
+                <button type="button"
+            onclick="var s = document.querySelector('.sidebar'), o = document.querySelector('.sidebar-overlay'); s.classList.toggle('open'); if (o) o.classList.toggle('hidden');"
             class="lg:hidden p-2 text-ink-400 hover:text-ink-600 dark:hover:text-white/80 rounded-lg hover:bg-ink-100 dark:hover:bg-white/[0.06]">
             <i data-lucide="menu" class="w-5 h-5"></i>
         </button>
                 </div>
-                <div class="flex-1">
-                    {{-- Global Search --}}
-                    <div class="relative hidden sm:block" x-data="{
+                <div class="flex-1 flex items-center">
+                    {{-- Mobile Search Trigger + Overlay --}}
+                    <div class="sm:hidden" x-data="{ show: false }">
+                        <button type="button"
+                            class="p-2 text-ink-400 hover:text-ink-600 dark:hover:text-white/80 rounded-lg hover:bg-ink-100 dark:hover:bg-white/[0.06]"
+                            @click="show = true; $nextTick(() => $refs.mInput?.focus())"
+                            title="Buscar">
+                            <i data-lucide="search" class="w-5 h-5"></i>
+                        </button>
+                        <div x-show="show" x-cloak class="fixed inset-x-0 top-0 z-[60]">
+                            <div class="bg-white dark:bg-[#141e36] border-b border-[#e5eaef] dark:border-white/[0.06] px-3 py-3 flex items-center gap-2 shadow-lg">
+                                <div class="flex-1 relative">
+                                    <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ink-400"></i>
+                                    <input x-ref="mInput" type="text" placeholder="Buscar..."
+                                        class="w-full h-10 pl-9 pr-3 rounded-lg bg-[#f4f6f9] dark:bg-white/[0.06] border-0 text-sm text-ink-700 dark:text-ink-300 placeholder-ink-400 outline-none focus:ring-2 focus:ring-[#5D87FF]/50"
+                                        @keydown.escape.prevent="show = false"
+                                        @keydown.enter="window.location='{{ route('olimpo.ocurrencias') }}?search=' + encodeURIComponent($event.target.value)">
+                                </div>
+                                <button @click="show = false" class="p-2 text-ink-400 hover:text-ink-600 dark:hover:text-white/80 rounded-lg hover:bg-ink-100 dark:hover:bg-white/[0.06] text-sm font-medium shrink-0">
+                                    Cancelar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Desktop/Tablet Search --}}
+                    <div class="hidden sm:block relative flex-1 min-w-0 max-w-[19.2rem]" x-data="{
                         q: '',
                         focused: false,
                         scope: 'ocurrencias',
@@ -62,18 +93,17 @@
                             });
                         }
                     }">
-                        <div class="flex items-center gap-2">
-                            <div class="flex items-center bg-[#f4f6f9] dark:bg-white/[0.06] rounded-lg overflow-hidden text-sm"
+                        <div class="flex items-center gap-2 w-full">
+                            <div class="flex-1 flex items-center bg-[#f4f6f9] dark:bg-white/[0.06] rounded-lg overflow-hidden text-sm"
                                 :class="{ 'ring-2 ring-[#5D87FF]/50': focused || q.length > 0 }">
                                 <span class="flex items-center justify-center px-3 self-stretch transition-colors duration-150"
                                     :class="focused || q.length > 0 ? 'bg-[#5D87FF] text-white' : 'text-ink-400'">
                                     <i data-lucide="search" class="w-4 h-4"></i>
                                 </span>
                                 <input type="text" x-model="q" placeholder="Buscar en el sistema..."
-                                    class="bg-transparent border-0 outline-none focus:outline-none focus:ring-0 py-2.5 pl-2 min-w-[24rem] text-sm text-ink-700 dark:text-ink-300 placeholder-ink-400"
+                                    class="bg-transparent border-0 outline-none focus:outline-none focus:ring-0 py-2.5 pl-2 w-full min-w-0 text-sm text-ink-700 dark:text-ink-300 placeholder-ink-400"
                                     @focus="focused = true"
                                     @blur="focused = false"
-                                    @keydown.escape.window="showWindow = false"
                                     @keydown.enter="q.trim() ? (showWindow = true, search(true)) : null">
 
                             </div>
@@ -82,9 +112,8 @@
                         {{-- Floating results window (teleported to body to escape header stacking context) --}}
                         <template x-teleport="body">
                             <div x-show="showWindow" x-cloak
-                                class="fixed inset-0 z-50 flex items-start justify-center pt-16"
-                                @click.self="showWindow = false">
-                            <div class="bg-white dark:bg-[#1C1F2E] rounded-xl shadow-lg border border-[#e5eaef] dark:border-white/[0.06] w-full max-w-6xl max-h-[80vh] flex flex-col overflow-hidden mx-4"
+                                class="fixed inset-0 z-50 flex items-start justify-center pt-16">
+                            <div class="bg-white dark:bg-[#141e36] rounded-xl shadow-lg border border-[#e5eaef] dark:border-white/[0.06] w-full max-w-6xl max-h-[80vh] flex flex-col overflow-hidden mx-4"
                                 @click.stop>
                                 {{-- Header --}}
                                 <div                                      class="flex items-center justify-between px-6 py-4 border-b border-[#e5eaef] dark:border-white/[0.06] shrink-0">
@@ -135,8 +164,8 @@
                                             </template>
                                             <template x-if="scope === 'ocurrencias'">
                                                 <tbody>
-                                                    <template x-for="r in results" :key="r._idx">
-                                                        <tr class="border-t border-ink-100 dark:border-ink-700 hover:bg-ink-50 dark:hover:bg-ink-800/50 transition-colors">
+                                                    <template x-for="(r, i) in results" :key="r._idx">
+                                                        <tr class="border-t border-ink-100 dark:border-ink-700 hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors" :class="i % 2 === 1 ? 'table-row-zebra' : ''">
                                                             <td class="px-2 py-2 text-xs text-ink-400 tabular-nums w-8" x-text="r._idx"></td>
                                                             <td class="px-2 py-2 text-xs text-ink-600 dark:text-ink-400 whitespace-nowrap" x-text="r.fecha"></td>
                                                             <td class="px-2 py-2 text-xs text-ink-600 dark:text-ink-400 tabular-nums whitespace-nowrap" x-text="r.hora_ingreso || '—'"></td>
@@ -181,8 +210,8 @@
                                             </template>
                                             <template x-if="scope === 'control-vehiculos'">
                                                 <tbody>
-                                                    <template x-for="r in results" :key="r._scope + r.fecha + r.placa">
-                                                        <tr class="border-t border-ink-100 dark:border-ink-700 hover:bg-ink-50 dark:hover:bg-ink-800/50 transition-colors">
+                                                    <template x-for="(r, i) in results" :key="r._scope + r.fecha + r.placa">
+                                                        <tr class="border-t border-ink-100 dark:border-ink-700 hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors" :class="i % 2 === 1 ? 'table-row-zebra' : ''">
                                                             <td class="px-3 py-2 font-medium text-ink-900 dark:text-ink-100" x-text="r.placa"></td>
                                                             <td class="px-3 py-2 text-ink-600 dark:text-ink-400 max-w-[140px] truncate" x-text="r.chofer" :title="r.chofer"></td>
                                                             <td class="px-3 py-2 text-ink-600 dark:text-ink-400" x-text="r.fecha"></td>
@@ -214,8 +243,8 @@
                                             </template>
                                             <template x-if="scope === 'todos'">
                                                 <tbody>
-                                                    <template x-for="r in results" :key="r._scope + (r.fecha || '') + (r.persona || r.placa)">
-                                                        <tr class="border-t border-ink-100 dark:border-ink-700 hover:bg-ink-50 dark:hover:bg-ink-800/50 transition-colors">
+                                                    <template x-for="(r, i) in results" :key="r._scope + (r.fecha || '') + (r.persona || r.placa)">
+                                                        <tr class="border-t border-ink-100 dark:border-ink-700 hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors" :class="i % 2 === 1 ? 'table-row-zebra' : ''">
                                                             <td class="px-3 py-2 font-medium text-ink-900 dark:text-ink-100 max-w-[180px] truncate" x-text="r.persona || r.chofer || r.placa" :title="r.persona || r.chofer || r.placa"></td>
                                                             <td class="px-3 py-2 text-ink-500 dark:text-ink-400 max-w-[300px] truncate" x-text="r.fecha + ' · ' + (r.vehiculo || r.placa || '—')" :title="r.fecha + ' · ' + (r.vehiculo || r.placa || '—')"></td>
                                                             <td class="px-3 py-2">
@@ -241,7 +270,7 @@
                         </template>
                     </div>
                 </div>
-                <div class="flex items-center gap-4 ml-auto">
+                <div class="flex items-center gap-1 sm:gap-4 ml-auto">
                     {{-- Weather --}}
                     <div class="flex items-center gap-1" x-data="{
                         weather: null,
@@ -339,15 +368,14 @@
                         },
                     }">
                         <template x-if="weather">
-                            <div style="display: grid; grid-template-columns: max-content; grid-template-areas: 'location location' 'icon temp' 'desc desc'; gap: 0 4px; align-items: center;">
-                                <div style="grid-area: location;" class="text-right text-[11px] text-ink-500 dark:text-ink-400 leading-tight" x-text="weather.city"></div>
+                            <div style="display: grid; grid-template-columns: max-content; grid-template-areas: 'location location' 'icon temp'; gap: 0 4px; align-items: center;">
+                                <div style="grid-area: location;" class="hidden md:block text-right text-[11px] text-ink-500 dark:text-ink-400 leading-tight" x-text="weather.city"></div>
                                 <div style="grid-area: icon; display: flex; justify-content: end; align-items: center;">
                                     <span class="text-xl" x-text="weatherEmoji"></span>
                                 </div>
                                 <div style="grid-area: temp;" class="text-right">
                                     <div style="line-height: 1.5rem; font-size: 1.3rem;" class="font-bold text-ink-800 dark:text-ink-100" x-text="weather.temp + '°'"></div>
                                 </div>
-                                <div style="grid-area: desc;" class="text-right text-xs text-ink-400 dark:text-ink-500" x-text="desc"></div>
                             </div>
                         </template>
                         <template x-if="!weather && !weatherError">
@@ -364,20 +392,24 @@
                         </button>
                         <span x-show="loading" class="text-xs text-ink-400 dark:text-ink-500 animate-spin inline-block"><i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i></span>
                     </div>
-                    <span class="w-px h-8 bg-ink-200 dark:bg-ink-700"></span>
+                    <span class="hidden md:block w-px h-8 bg-ink-200 dark:bg-ink-700"></span>
                     {{-- Clock --}}
                     <div x-data="{
                         now: new Date(),
                         init() { setInterval(() => { this.now = new Date(); }, 1000); },
+                        get shortDate() {
+                            return this.now.toLocaleDateString('es-AR', { day: 'numeric', month: 'short' }).toUpperCase();
+                        },
                         get date() {
-                            return this.now.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })
+                            return this.now.toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'long' })
                                 .replace(/^(\w)/, (c) => c.toUpperCase())
                                 .replace(/de (\w)/, (_, m) => 'de ' + m.toUpperCase());
                         },
-                        get time() { return this.now.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }); }
-                    }" class="select-none">
-                        <div class="text-xs font-medium text-ink-400 dark:text-ink-500 leading-tight" x-text="date"></div>
-                        <div class="text-right text-3xl font-bold text-ink-800 dark:text-ink-100 leading-none tracking-tight tabular-nums" x-text="time"></div>
+                        get time() { return this.now.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false }); }
+                    }" class="select-none flex md:block items-center gap-1.5">
+                        <div class="hidden md:block text-xs font-medium text-ink-400 dark:text-ink-500 leading-tight" x-text="date"></div>
+                        <div class="md:hidden text-[10px] font-medium text-ink-400 dark:text-ink-500 leading-tight uppercase tracking-wider" x-text="shortDate"></div>
+                        <div class="text-right text-lg md:text-xl lg:text-3xl font-bold text-ink-800 dark:text-ink-100 leading-none tracking-tight tabular-nums" x-text="time"></div>
                     </div>
                     <span class="w-px h-8 bg-ink-200 dark:bg-ink-700"></span>
                     @php $user = auth()->user(); $hasPhoto = $user->profile_photo_path && Storage::exists($user->profile_photo_path); @endphp
@@ -394,16 +426,13 @@
                                     <span class="text-xs font-bold text-[#5D87FF]">{{ strtoupper(substr($user->name, 0, 1)) }}</span>
                                 @endif
                             </div>
-                            <div class="text-left hidden sm:block">
-                            <p class="text-sm text-ink-900 dark:text-white font-medium leading-tight">{{ $user->name }}</p>
-                            <p class="text-[10px] text-ink-400 dark:text-white/50 capitalize font-medium leading-tight">{{ $user->role }}</p>
-                            </div>
                             <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-ink-400 shrink-0" x-bind:class="open ? 'rotate-180' : ''"></i>
                         </button>
                         <div x-show="open" x-cloak
-                            class="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-[#1C1F2E] rounded-xl shadow-lg border border-[#e5eaef] dark:border-white/[0.06] overflow-hidden z-50">
+                            class="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-[#141e36] rounded-xl shadow-lg border border-[#e5eaef] dark:border-white/[0.06] overflow-hidden z-50">
                             <div class="px-4 py-3 border-b border-[#e5eaef] dark:border-white/[0.06]">
                                 <p class="font-semibold text-ink-900 dark:text-white text-sm truncate">{{ $user->name }}</p>
+                                <p class="text-[10px] font-semibold uppercase tracking-wider text-[#5D87FF] mt-0.5">{{ $user->role }}</p>
                                 <p class="text-xs text-ink-500 dark:text-white/50 truncate">{{ $user->email }}</p>
                             </div>
                             <div class="py-1">
@@ -433,15 +462,15 @@
                 $allPanels = config('olimpo.panels', []);
                 $info = $allPanels[$routeName] ?? ['icon' => 'circle', 'desc' => ''];
             @endphp
-            <main class="flex-1 overflow-y-auto p-4 lg:p-6 bg-[#f6f8fa] dark:bg-[#0c0c14]">
-                <div class="mb-6 flex items-center gap-4">
-                    <div class="page-header-icon">
-                        <i data-lucide="{{ $info['icon'] }}" class="w-5 h-5 text-[#5D87FF]"></i>
+            <main class="flex-1 overflow-y-auto p-4 lg:p-6 bg-[#f6f8fa] dark:bg-[#0b1120]">
+                <div class="mb-4 md:mb-6 flex items-center gap-2 md:gap-4">
+                    <div class="page-header-icon hidden sm:flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-lg bg-[#5D87FF]/10">
+                        <i data-lucide="{{ $info['icon'] }}" class="w-4 h-4 md:w-5 md:h-5 text-[#5D87FF]"></i>
                     </div>
-                    <div>
-                        <h1 class="text-xl font-bold text-ink-900 dark:text-ink-100 select-none tracking-tight">{{ $title ?? '' }}</h1>
+                    <div class="min-w-0">
+                        <h1 class="text-base md:text-lg lg:text-xl font-bold text-ink-900 dark:text-ink-100 select-none tracking-tight truncate">{{ $title ?? '' }}</h1>
                         @if($info['desc'])
-                        <p class="text-sm text-ink-500 dark:text-ink-400 mt-0.5">{{ $info['desc'] }}</p>
+                        <p class="text-xs md:text-sm text-ink-500 dark:text-ink-400 mt-0.5 truncate">{{ $info['desc'] }}</p>
                         @endif
                     </div>
                 </div>
@@ -472,6 +501,10 @@
         :class="type === 'success' ? 'bg-[#13DEB9]' : (type === 'warning' ? 'bg-[#FFAE1F]' : (type === 'danger' || type === 'error' ? 'bg-[#FA896B]' : 'bg-[#539BFF]'))"
         x-text="message"
     ></div>
+
+    <livewire:olimpo.recordatorios-global />
+
+    <livewire:chat-ia />
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     @stack('scripts')

@@ -69,17 +69,33 @@ class OcurrenciasTable extends Component
         } else {
             $this->selectedIds[] = $id;
         }
+        $this->selectedIds = array_values($this->selectedIds);
     }
 
     public function toggleSelectAll()
     {
-        $ids = $this->getOcurrenciasIds();
-        $allSelected = !array_diff($ids, $this->selectedIds);
+        $ids = array_map('intval', $this->getOcurrenciasIds());
+        $current = array_values(array_unique(array_map('intval', $this->selectedIds)));
+        $allSelected = $ids && !array_diff($ids, $current);
         if ($allSelected) {
-            $this->selectedIds = array_diff($this->selectedIds, $ids);
+            $this->selectedIds = array_values(array_diff($current, $ids));
         } else {
-            $this->selectedIds = array_merge($this->selectedIds, $ids);
+            $this->selectedIds = array_values(array_unique(array_merge($current, $ids)));
         }
+    }
+
+    public function eliminarSeleccionados()
+    {
+        $ids = $this->selectedIds;
+        if (empty($ids)) {
+            $this->dispatch('notify', message: 'Selecciona una o más ocurrencias.', type: 'warning');
+            return;
+        }
+        $count = Ocurrencia::whereIn('id', $ids)->delete();
+        $this->selectedIds = [];
+        $this->selectMode = false;
+        $this->resetPage();
+        $this->dispatch('notify', message: "{$count} ocurrencia(s) eliminada(s).", type: 'success');
     }
 
     #[On('activate-nota-form')]
@@ -166,23 +182,22 @@ class OcurrenciasTable extends Component
         }
 
         if ($this->search) {
-            $q = $this->search;
-            $query->where(function ($qry) use ($q) {
-                $qry->where('ocurrencias.persona_nombre', 'like', "%{$q}%")
-                    ->orWhere('ocurrencias.tipo', 'like', "%{$q}%")
-                    ->orWhere('ocurrencias.detalles', 'like', "%{$q}%")
-                    ->orWhere('ocurrencias.otro', 'like', "%{$q}%")
-                    ->orWhere('ocurrencias.destino', 'like', "%{$q}%")
-                    ->orWhere('ocurrencias.motivo', 'like', "%{$q}%")
-                    ->orWhere('ocurrencias.vehiculo', 'like', "%{$q}%")
-                    ->orWhere('ocurrencias.nota_texto', 'like', "%{$q}%")
-                    ->orWhere('ocurrencias.observacion', 'like', "%{$q}%")
-                    ->orWhere('ocurrencias.fecha', 'like', "%{$q}%")
-                    ->orWhere('personal.cargo', 'like', "%{$q}%")
-                    ->orWhere('personal.alias', 'like', "%{$q}%")
-                    ->orWhere('personal.documento', 'like', "%{$q}%")
-                    ->orWhere('personal.telefono', 'like', "%{$q}%");
-            });
+            $query->where(accent_insensitive_search([
+                'ocurrencias.persona_nombre',
+                'ocurrencias.tipo',
+                'ocurrencias.detalles',
+                'ocurrencias.otro',
+                'ocurrencias.destino',
+                'ocurrencias.motivo',
+                'ocurrencias.vehiculo',
+                'ocurrencias.nota_texto',
+                'ocurrencias.observacion',
+                'ocurrencias.fecha',
+                'personal.cargo',
+                'personal.alias',
+                'personal.documento',
+                'personal.telefono',
+            ], $this->search));
         }
 
         if ($this->search || $this->filterFecha

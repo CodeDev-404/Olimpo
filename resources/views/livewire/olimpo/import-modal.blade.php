@@ -1,7 +1,6 @@
 <div>
     @if($show)
     <div class="modal-overlay"
-        wire:click.self="close"
         x-data x-show="$wire.show"
         x-transition:enter="transition ease-out duration-200"
         x-transition:enter-start="opacity-0"
@@ -9,7 +8,7 @@
         x-transition:leave="transition ease-in duration-150"
         x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0">
-        <div class="modal-card max-w-4xl"
+        <div class="modal-card w-full max-w-4xl mx-4"
             @click.stop
             x-transition:enter="transition ease-out duration-200"
             x-transition:enter-start="opacity-0 scale-95"
@@ -103,7 +102,7 @@
                             </thead>
                             <tbody>
                                 @foreach($rows as $i => $row)
-                                    <tr class="{{ !$row['valid'] ? 'bg-red-50' : '' }}">
+                                    <tr class="{{ !$row['valid'] ? 'bg-red-50' : ($i % 2 === 1 ? 'table-row-zebra' : '') }}">
                                         <td>
                                             @if($row['valid'])
                                                 <input type="checkbox" wire:model.live="selectedRows" value="{{ $i }}"
@@ -163,9 +162,9 @@
                         </table>
                     </div>
 
-                    <div class="flex items-center justify-between mt-3">
+                    <div class="flex flex-wrap items-center justify-between gap-3 mt-3">
                         <button wire:click="$set('rows', [])" class="btn btn-outline btn-sm">Volver a elegir archivo</button>
-                        <div class="flex gap-2">
+                        <div class="flex flex-wrap gap-2">
                             <button wire:click="close" class="btn btn-secondary">Cancelar</button>
                             <button wire:click="confirm" class="btn btn-primary"
                                 wire:loading.attr="disabled"

@@ -21,3 +21,7 @@ Schedule::call(function () {
         \Log::info("Recordatorio cumpleaños: {$cumpleano->nombre} ({$cumpleano->parentesco}) a las {$hora}");
     }
 })->dailyAt('07:30')->name('cumpleanos-recordatorio');
+
+Schedule::command('app:enviar-recordatorios-programados')
+    ->everyFiveMinutes()
+    ->name('recordatorios-programados');

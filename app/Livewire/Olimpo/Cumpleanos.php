@@ -2,20 +2,30 @@
 
 namespace App\Livewire\Olimpo;
 
-
 use Livewire\Component;
 use Livewire\Attributes\Computed;
 use App\Models\Cumpleano;
+use App\Models\Personal;
+use App\Models\RecordatorioProgramado;
 use Carbon\Carbon;
 
 class Cumpleanos extends Component
 {
     public $cumpleanosHoy = [];
+    public $programadosHoy = [];
     public $showForm = false;
     public $editId = null;
     public $selectMode = false;
     public $selectedIds = [];
     public $selectedId = null;
+
+    public $showProgramar = false;
+    public $programarId = null;
+    public $programarCumpleanoId = null;
+    public $programarNombre = '';
+    public $programarFecha = '';
+    public $programarHora = '07:30';
+    public $programarLimite = '';
 
     public $fecha = '';
     public $nombre = '';
@@ -25,18 +35,135 @@ class Cumpleanos extends Component
     public $recordatorio_activo = true;
     public $recordatorio_hora = '07:30';
     public $proveedor = 'consultadni';
+    public $search = '';
+    public $filterRecordatorio = '';
+    public $filterProximidad = '';
 
     public array $proveedores = [
         'consultadni' => 'Simple',
         'kmente' => 'Premium',
     ];
 
-    protected $listeners = ['importData' => 'handleImport'];
+    protected $listeners = [
+        'importData' => 'handleImport',
+        'editar' => 'editar',
+        'eliminar' => 'eliminar',
+        'programar' => 'programarRecordatorio',
+        'marcarEnviado' => 'marcarEnviado',
+    ];
+
+    public function mount()
+    {
+        $this->refreshCumpleanosHoy();
+        $this->refreshProgramadosHoy();
+    }
+
+    public function refreshProgramadosHoy()
+    {
+        $this->programadosHoy = RecordatorioProgramado::whereDate('fecha', now()->toDateString())
+            ->where('enviado', false)
+            ->get()
+            ->map(fn($r) => [
+                'id' => $r->id,
+                'hora' => substr($r->hora, 0, 5),
+                'nombre' => $r->cumpleano?->nombre ?? '',
+                'parentesco' => $r->cumpleano?->parentesco ?? '',
+            ])
+            ->values()
+            ->toArray();
+    }
+
+    public function programarRecordatorio($id = null)
+    {
+        $id = is_array($id) ? ($id['id'] ?? null) : $id;
+        if (is_string($id)) {
+            $this->dispatch('notify', message: 'No puedes programar un recordatorio de un cumpleaños del personal.', type: 'warning');
+            return;
+        }
+        $c = Cumpleano::find($id);
+        if (!$c) return;
+
+        $this->programarCumpleanoId = $c->id;
+        $this->programarNombre = $c->nombre;
+        [$d, $m] = array_map('intval', explode('/', $c->fecha));
+        $fechaCumple = Carbon::create(now()->year, $m, $d);
+        if ($fechaCumple->lt(now()->startOfDay())) $fechaCumple->addYear();
+        $this->programarLimite = $fechaCumple->format('d/m/Y');
+
+        $existing = RecordatorioProgramado::where('cumpleano_id', $c->id)->latest()->first();
+        $this->programarId = $existing?->id;
+        $this->programarFecha = $existing?->fecha?->format('Y-m-d') ?? '';
+        $this->programarHora = $existing ? substr($existing->hora, 0, 5) : '07:30';
+
+        $this->showProgramar = true;
+    }
+
+    public function guardarProgramado()
+    {
+        abort_unless(auth()->user()?->role === 'admin', 403);
+        $this->validate([
+            'programarFecha' => 'required|date',
+            'programarHora' => 'required|date_format:H:i',
+        ], [
+            'programarFecha.required' => 'La fecha es obligatoria.',
+            'programarHora.required' => 'La hora es obligatoria.',
+            'programarHora.date_format' => 'La hora debe tener formato HH:MM.',
+        ]);
+
+        $limite = Carbon::createFromFormat('d/m/Y', $this->programarLimite)->startOfDay();
+        $fecha = Carbon::parse($this->programarFecha)->startOfDay();
+        if ($fecha->lt(now()->startOfDay())) {
+            $this->dispatch('notify', message: 'La fecha debe ser hoy o una fecha futura.', type: 'warning');
+            return;
+        }
+        if ($fecha->gte($limite)) {
+            $this->dispatch('notify', message: "La fecha debe ser antes del cumpleaños ({$this->programarLimite}).", type: 'warning');
+            return;
+        }
+
+        RecordatorioProgramado::updateOrCreate(
+            ['id' => $this->programarId],
+            [
+                'cumpleano_id' => $this->programarCumpleanoId,
+                'fecha' => $fecha->format('Y-m-d'),
+                'hora' => $this->programarHora . ':00',
+                'enviado' => false,
+            ]
+        );
+
+        $this->showProgramar = false;
+        $this->refreshProgramadosHoy();
+        $this->dispatch('notify', message: 'Recordatorio programado.', type: 'success');
+    }
+
+    public function eliminarProgramado()
+    {
+        abort_unless(auth()->user()?->role === 'admin', 403);
+        if ($this->programarId) {
+            RecordatorioProgramado::find($this->programarId)?->delete();
+        }
+        $this->showProgramar = false;
+        $this->refreshProgramadosHoy();
+        $this->dispatch('notify', message: 'Recordatorio programado eliminado.', type: 'success');
+    }
+
+    public function cancelarProgramado()
+    {
+        $this->showProgramar = false;
+        $this->programarId = null;
+    }
+
+    public function marcarEnviado($id)
+    {
+        RecordatorioProgramado::whereKey($id)->update(['enviado' => true]);
+        $this->refreshProgramadosHoy();
+    }
 
     #[Computed]
     public function getCumpleanosProperty()
     {
-        return cache()->remember('cumpleanos_list', 3600, function () {
+        return $this->filterCumpleanos(
+            cache()->remember('cumpleanos_list', 3600, function () {
             $today = now()->format('d/m');
             $todayMonth = (int) now()->format('m');
             $todayDay = (int) now()->format('d');
@@ -45,7 +172,7 @@ class Cumpleanos extends Component
             $aliases = [];
             $dnis = Cumpleano::whereNotNull('dni')->pluck('dni');
             if ($dnis->isNotEmpty()) {
-                $aliases = \App\Models\Personal::whereIn('documento', $dnis->toArray())
+                $aliases = Personal::whereIn('documento', $dnis->toArray())
                     ->pluck('alias', 'documento')
                     ->toArray();
             }
@@ -76,7 +203,7 @@ class Cumpleanos extends Component
 
             $existingDnis = collect($all)->pluck('dni')->filter()->values()->toArray();
 
-            $personal = \App\Models\Personal::whereNotNull('fecha_nacimiento')
+            $personal = Personal::whereNotNull('fecha_nacimiento')
                 ->get(['id', 'nombre', 'alias', 'documento', 'fecha_nacimiento'])
                 ->reject(fn($p) => $p->documento && in_array($p->documento, $existingDnis))
                 ->map(function ($p) use ($today, $todayMd, $todayMonth, $todayDay) {
@@ -110,12 +237,38 @@ class Cumpleanos extends Component
             usort($merged, fn($a, $b) => $a['proximidad'] <=> $b['proximidad']);
 
             return $merged;
-        });
+        })
+        );
     }
 
-    public function mount()
+    private function filterCumpleanos(array $rows): array
     {
-        $this->refreshCumpleanosHoy();
+        $rows = array_filter($rows, function ($c) {
+            if ($this->filterRecordatorio === 'activos' && empty($c['recordatorio_activo'])) return false;
+            if ($this->filterRecordatorio === 'inactivos' && !empty($c['recordatorio_activo'])) return false;
+            return true;
+        });
+        if ($this->filterProximidad !== '') {
+            $max = (int) $this->filterProximidad;
+            $rows = array_filter($rows, fn($c) => $c['proximidad'] <= $max);
+        }
+        if ($this->search !== '') {
+            $term = unaccent_string(mb_strtolower(trim($this->search)));
+            $rows = array_filter($rows, function ($c) use ($term) {
+                $haystack = unaccent_string(mb_strtolower(implode(' ', [
+                    $c['nombre'] ?? '', $c['alias'] ?? '', $c['parentesco'] ?? '', $c['detalles'] ?? '',
+                ])));
+                return str_contains($haystack, $term);
+            });
+        }
+        return array_values($rows);
+    }
+
+    public function limpiarFiltros()
+    {
+        $this->search = '';
+        $this->filterRecordatorio = '';
+        $this->filterProximidad = '';
     }
 
     public function refreshCumpleanosHoy()
@@ -143,17 +296,19 @@ class Cumpleanos extends Component
         } else {
             $this->selectedIds[] = $id;
         }
+        $this->selectedIds = array_values($this->selectedIds);
     }
 
     public function toggleSelectAll()
     {
-        $ids = array_map(fn($c) => $c['id'] ?? null, $this->cumpleanos);
+        $ids = array_map(fn($c) => (int)($c['id'] ?? 0), $this->cumpleanos);
         $ids = array_values(array_filter($ids));
-        $allSelected = !array_diff($ids, $this->selectedIds);
+        $current = array_values(array_unique(array_map('intval', $this->selectedIds)));
+        $allSelected = $ids && !array_diff($ids, $current);
         if ($allSelected) {
-            $this->selectedIds = array_diff($this->selectedIds, $ids);
+            $this->selectedIds = array_values(array_diff($current, $ids));
         } else {
-            $this->selectedIds = array_merge($this->selectedIds, $ids);
+            $this->selectedIds = array_values(array_unique(array_merge($current, $ids)));
         }
     }
 
@@ -358,7 +513,17 @@ class Cumpleanos extends Component
 
     public function render()
     {
-        return view('livewire.olimpo.cumpleanos')
-            ->layout('layouts.olimpo', ['title' => 'Cumpleaños']);
+        $cumpleanos = $this->cumpleanos;
+        $this->cumpleanosHoy = array_values(array_filter($cumpleanos, fn($c) => !empty($c['es_hoy'])));
+        $proximos = array_values(array_filter($cumpleanos, fn($c) => empty($c['es_hoy'])));
+
+        return view('livewire.olimpo.cumpleanos', [
+            'cumpleanosHoy' => $this->cumpleanosHoy,
+            'countHoy' => count(array_filter($cumpleanos, fn($c) => !empty($c['es_hoy']))),
+            'count7' => count(array_filter($proximos, fn($c) => $c['proximidad'] <= 7)),
+            'count30' => count(array_filter($proximos, fn($c) => $c['proximidad'] <= 30)),
+            'total' => count($cumpleanos),
+            'activeFilters' => ($this->search !== '' ? 1 : 0) + ($this->filterProximidad !== '' ? 1 : 0) + ($this->filterRecordatorio !== '' ? 1 : 0),
+        ])->layout('layouts.olimpo', ['title' => 'Cumpleaños']);
     }
 }

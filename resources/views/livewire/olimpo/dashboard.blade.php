@@ -2,15 +2,15 @@
     @php $greeting = \App\Helpers\GreetingHelper::getGreeting(auth()->id()); @endphp
 
     {{-- Greeting Banner --}}
-    <div class="bg-white dark:bg-[#1C1F2E] rounded-xl border border-[#e5eaef] dark:border-white/[0.06] p-5 mb-6 flex items-center justify-between gap-4">
-        <div class="flex items-start gap-4">
-            <div class="w-12 h-12 rounded-xl bg-[#5D87FF]/10 flex items-center justify-center shrink-0">
-                <i data-lucide="sun" class="w-6 h-6 text-[#5D87FF]"></i>
+    <div class="bg-white dark:bg-[#111a30]/70 rounded-xl border border-[#e5eaef] dark:border-white/[0.06] p-3 sm:p-5 mb-4 sm:mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4">
+        <div class="flex items-start gap-2 sm:gap-4 w-full sm:w-auto">
+            <div class="w-8 h-8 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-[#5D87FF]/10 flex items-center justify-center shrink-0">
+                <i data-lucide="sun" class="w-4 h-4 sm:w-6 sm:h-6 text-[#5D87FF]"></i>
             </div>
-            <div>
-                <h2 class="text-lg font-bold text-ink-900 dark:text-white">&iexcl;Hola, {{ auth()->user()->name }}! {{ $greeting['saludo'] }}.</h2>
-                <p class="text-sm text-ink-500 dark:text-white/60 mt-0.5">Que tengas un excelente servicio hoy!</p>
-                <div class="flex items-center gap-3 mt-3 text-xs text-ink-400 dark:text-white/50">
+            <div class="min-w-0 flex-1">
+                <h2 class="text-sm sm:text-lg font-bold text-ink-900 dark:text-white truncate">&iexcl;Hola, {{ auth()->user()->name }}! {{ $greeting['saludo'] }}.</h2>
+                <p class="text-xs sm:text-sm text-ink-500 dark:text-white/60 mt-0.5">Que tengas un excelente servicio hoy!</p>
+                <div class="hidden sm:flex items-center gap-3 mt-2 sm:mt-3 text-xs text-ink-400 dark:text-white/50">
                     <span class="inline-flex items-center gap-1.5">
                         <i data-lucide="quote" class="w-3 h-3"></i>
                         &ldquo;{{ $greeting['frase'] }}&rdquo;
@@ -18,35 +18,37 @@
                 </div>
             </div>
         </div>
-        <div class="flex gap-2 shrink-0">
-            <a href="{{ route('olimpo.ocurrencias') }}" class="quick-action quick-action-primary">
-                <i data-lucide="plus" class="w-3.5 h-3.5"></i>Nueva Ocurrencia
+        <div class="flex gap-2 shrink-0 self-end sm:self-auto">
+            <a href="{{ route('olimpo.ocurrencias') }}" class="quick-action quick-action-primary text-xs">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                <span class="hidden sm:inline">Nueva Ocurrencia</span>
+                <span class="sm:hidden">Nueva</span>
             </a>
         </div>
     </div>
 
     {{-- Birthday Alert --}}
     @if(count($cumpleanos) > 0)
-    <div class="bg-white dark:bg-[#1C1F2E] rounded-xl border border-[#e5eaef] dark:border-white/[0.06] p-5 mb-6">
-        <div class="flex items-start gap-4">
-            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shrink-0">
-                <i data-lucide="cake" class="w-5 h-5 text-white"></i>
+    <div class="bg-white dark:bg-[#111a30]/70 rounded-xl border border-[#e5eaef] dark:border-white/[0.06] p-3 sm:p-5 mb-4 sm:mb-6">
+        <div class="flex items-start gap-2 sm:gap-4">
+            <div class="w-6 h-6 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shrink-0">
+                <i data-lucide="cake" class="w-3 h-3 sm:w-5 sm:h-5 text-white"></i>
             </div>
-            <div class="flex-1">
-                <h3 class="text-sm font-bold text-amber-600 dark:text-amber-300 uppercase tracking-wider mb-3 font-display">¡Cumpleaños de hoy!</h3>
-                <div class="space-y-2">
+            <div class="flex-1 min-w-0">
+                <h3 class="text-[10px] sm:text-sm font-bold text-amber-600 dark:text-amber-300 uppercase tracking-wider mb-1.5 sm:mb-3 font-display">¡Cumpleaños de hoy!</h3>
+                <div class="space-y-1.5 sm:space-y-2">
                     @foreach($cumpleanos as $c)
-                    <div class="flex items-center gap-3 p-3 bg-amber-50 dark:bg-amber-500/5 rounded-xl border border-amber-200/40 dark:border-amber-500/10">
-                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shrink-0">
-                            <i data-lucide="party-popper" class="w-4 h-4 text-white"></i>
+                    <div class="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-amber-50 dark:bg-amber-500/5 rounded-xl border border-amber-200/40 dark:border-amber-500/10">
+                        <div class="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shrink-0">
+                            <i data-lucide="party-popper" class="w-3 h-3 sm:w-4 sm:h-4 text-white"></i>
                         </div>
-                        <div class="flex-1">
-                            <p class="font-semibold text-ink-900 dark:text-white font-display">{{ $c['nombre'] }}</p>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-xs sm:font-semibold text-ink-900 dark:text-white font-display truncate">{{ $c['nombre'] }}</p>
                             @if($c['parentesco'])
-                                <p class="text-xs text-ink-500 dark:text-white/50 capitalize">{{ $c['parentesco'] }}</p>
+                                <p class="text-[10px] sm:text-xs text-ink-500 dark:text-white/50 capitalize truncate">{{ $c['parentesco'] }}</p>
                             @endif
                         </div>
-                        <span class="px-3 py-1 bg-amber-200/80 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300 text-[10px] font-bold rounded-lg uppercase tracking-wider font-label">HOY</span>
+                        <span class="px-2 py-0.5 sm:px-3 sm:py-1 bg-amber-200/80 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300 text-[9px] sm:text-[10px] font-bold rounded-lg uppercase tracking-wider font-label shrink-0">HOY</span>
                     </div>
                     @endforeach
                 </div>
@@ -56,98 +58,106 @@
     @endif
 
     {{-- KPI Grid --}}
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
-        <div class="kpi-card bg-white dark:bg-[#1C1F2E] rounded-xl border border-[#e5eaef] dark:border-white/[0.06] p-5">
-            <div class="flex items-start justify-between mb-4">
-                <div class="w-11 h-11 rounded-lg bg-gradient-to-br from-[#5D87FF] to-[#49BEFF] flex items-center justify-center">
-                    <i data-lucide="users" class="w-5 h-5 text-white"></i>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 mb-4 sm:mb-6">
+        <div class="kpi-card bg-white dark:bg-[#111a30]/70 rounded-xl border border-[#e5eaef] dark:border-white/[0.06] p-3 sm:p-5">
+            <div class="flex items-start justify-between mb-2 sm:mb-4">
+                <div class="w-8 h-8 sm:w-11 sm:h-11 rounded-lg bg-gradient-to-br from-[#5D87FF] to-[#49BEFF] flex items-center justify-center">
+                    <i data-lucide="users" class="w-3.5 h-3.5 sm:w-5 sm:h-5 text-white"></i>
                 </div>
-                <span class="inline-flex items-center gap-0.5 text-[11px] font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/15 px-1.5 py-0.5 rounded-lg">↑ {{ $kpis['personal_pct'] }}%</span>
+                <span class="inline-flex items-center gap-0.5 text-[10px] sm:text-[11px] font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/15 px-1 sm:px-1.5 py-0.5 rounded-lg">↑ {{ $kpis['personal_pct'] }}%</span>
             </div>
-            <p class="text-2xl font-bold text-ink-900 dark:text-white">{{ $kpis['personal_activo'] }}<span class="text-base font-normal text-ink-400 mx-0.5">/</span><span class="text-base font-normal text-ink-400">{{ $kpis['personal_total'] }}</span></p>
-            <p class="text-sm text-ink-500 dark:text-white/60 mt-1">Personal Activo</p>
-            <div class="flex items-center gap-1 mt-3">
-                <div class="flex-1 h-1.5 rounded-full bg-ink-100 dark:bg-white/[0.06]">
+            <p class="text-lg sm:text-2xl font-bold text-ink-900 dark:text-white">{{ $kpis['personal_activo'] }}<span class="text-xs sm:text-base font-normal text-ink-400 mx-0.5">/</span><span class="text-xs sm:text-base font-normal text-ink-400">{{ $kpis['personal_total'] }}</span></p>
+            <p class="text-[11px] sm:text-sm text-ink-500 dark:text-white/60 mt-0.5 sm:mt-1">Personal Activo</p>
+            <div class="flex items-center gap-1 mt-2 sm:mt-3">
+                <div class="flex-1 h-1 sm:h-1.5 rounded-full bg-ink-100 dark:bg-white/[0.06]">
                     <div class="h-full rounded-full bg-gradient-to-r from-[#5D87FF] to-[#49BEFF]" style="width:{{ $kpis['personal_total'] > 0 ? ($kpis['personal_activo'] / $kpis['personal_total'] * 100) : 0 }}%"></div>
                 </div>
             </div>
         </div>
-        <div class="kpi-card bg-white dark:bg-[#1C1F2E] rounded-xl border border-[#e5eaef] dark:border-white/[0.06] p-5">
-            <div class="flex items-start justify-between mb-4">
-                <div class="w-11 h-11 rounded-lg bg-gradient-to-br from-[#13DEB9] to-[#49BEFF] flex items-center justify-center">
-                    <i data-lucide="clipboard-list" class="w-5 h-5 text-white"></i>
+        <div class="kpi-card bg-white dark:bg-[#111a30]/70 rounded-xl border border-[#e5eaef] dark:border-white/[0.06] p-3 sm:p-5">
+            <div class="flex items-start justify-between mb-2 sm:mb-4">
+                <div class="w-8 h-8 sm:w-11 sm:h-11 rounded-lg bg-gradient-to-br from-[#13DEB9] to-[#49BEFF] flex items-center justify-center">
+                    <i data-lucide="clipboard-list" class="w-3.5 h-3.5 sm:w-5 sm:h-5 text-white"></i>
                 </div>
-                <span class="inline-flex items-center gap-0.5 text-[11px] font-semibold text-ink-400 bg-ink-100 dark:bg-white/[0.06] px-1.5 py-0.5 rounded-lg">{{ $kpis['ocurrencias_hoy'] }} hoy</span>
+                <span class="inline-flex items-center gap-0.5 text-[10px] sm:text-[11px] font-semibold text-ink-400 bg-ink-100 dark:bg-white/[0.06] px-1 sm:px-1.5 py-0.5 rounded-lg">{{ $kpis['ocurrencias_hoy'] }} hoy</span>
             </div>
-            <p class="text-2xl font-bold text-ink-900 dark:text-white">{{ $kpis['ocurrencias_mes'] }}</p>
-            <p class="text-sm text-ink-500 dark:text-white/60 mt-1">Ocurrencias del Mes</p>
-            <div class="flex items-center gap-1 mt-3">
-                <div class="flex-1 h-1.5 rounded-full bg-ink-100 dark:bg-white/[0.06]">
+            <p class="text-lg sm:text-2xl font-bold text-ink-900 dark:text-white">{{ $kpis['ocurrencias_mes'] }}</p>
+            <p class="text-[11px] sm:text-sm text-ink-500 dark:text-white/60 mt-0.5 sm:mt-1">Ocurrencias del Mes</p>
+            <div class="flex items-center gap-1 mt-2 sm:mt-3">
+                <div class="flex-1 h-1 sm:h-1.5 rounded-full bg-ink-100 dark:bg-white/[0.06]">
                     <div class="h-full rounded-full bg-gradient-to-r from-[#13DEB9] to-[#49BEFF]" style="width:{{ $kpis['ocurrencias_mes'] > 0 ? min(100, $kpis['ocurrencias_mes'] / 200 * 100) : 0 }}%"></div>
                 </div>
             </div>
         </div>
-        <div class="kpi-card bg-white dark:bg-[#1C1F2E] rounded-xl border border-[#e5eaef] dark:border-white/[0.06] p-5">
-            <div class="flex items-start justify-between mb-4">
-                <div class="w-11 h-11 rounded-lg bg-gradient-to-br from-[#FFAE1F] to-[#FA896B] flex items-center justify-center">
-                    <i data-lucide="truck" class="w-5 h-5 text-white"></i>
+        <div class="kpi-card bg-white dark:bg-[#111a30]/70 rounded-xl border border-[#e5eaef] dark:border-white/[0.06] p-3 sm:p-5">
+            <div class="flex items-start justify-between mb-2 sm:mb-4">
+                <div class="w-8 h-8 sm:w-11 sm:h-11 rounded-lg bg-gradient-to-br from-[#FFAE1F] to-[#FA896B] flex items-center justify-center">
+                    <i data-lucide="truck" class="w-3.5 h-3.5 sm:w-5 sm:h-5 text-white"></i>
                 </div>
-                <span class="inline-flex items-center gap-0.5 text-[11px] font-semibold text-ink-400 bg-ink-100 dark:bg-white/[0.06] px-1.5 py-0.5 rounded-lg">{{ $kpis['vehiculos_uso'] }} activos</span>
+                <span class="inline-flex items-center gap-0.5 text-[10px] sm:text-[11px] font-semibold text-ink-400 bg-ink-100 dark:bg-white/[0.06] px-1 sm:px-1.5 py-0.5 rounded-lg">{{ $kpis['vehiculos_uso'] }} activos</span>
             </div>
-            <p class="text-2xl font-bold text-ink-900 dark:text-white">{{ $kpis['vehiculos_total'] }}</p>
-            <p class="text-sm text-ink-500 dark:text-white/60 mt-1">Vehículos Registrados</p>
-            <div class="flex items-center gap-1.5 mt-3">
-                <div class="flex-1 h-1.5 rounded-full bg-ink-100 dark:bg-white/[0.06]">
+            <p class="text-lg sm:text-2xl font-bold text-ink-900 dark:text-white">{{ $kpis['vehiculos_total'] }}</p>
+            <p class="text-[11px] sm:text-sm text-ink-500 dark:text-white/60 mt-0.5 sm:mt-1">Vehículos Registrados</p>
+            <div class="flex items-center gap-1 sm:gap-1.5 mt-2 sm:mt-3">
+                <div class="flex-1 h-1 sm:h-1.5 rounded-full bg-ink-100 dark:bg-white/[0.06]">
                     <div class="h-full rounded-full bg-gradient-to-r from-[#FFAE1F] to-[#FA896B]" style="width:{{ $kpis['vehiculos_total'] > 0 ? ($kpis['vehiculos_uso'] / $kpis['vehiculos_total'] * 100) : 0 }}%"></div>
                 </div>
-                <span class="text-xs font-semibold text-ink-500 dark:text-white/60">{{ $kpis['vehiculos_total'] > 0 ? round($kpis['vehiculos_uso'] / $kpis['vehiculos_total'] * 100) : 0 }}%</span>
+                <span class="text-[10px] sm:text-xs font-semibold text-ink-500 dark:text-white/60">{{ $kpis['vehiculos_total'] > 0 ? round($kpis['vehiculos_uso'] / $kpis['vehiculos_total'] * 100) : 0 }}%</span>
             </div>
         </div>
-        <div class="kpi-card bg-white dark:bg-[#1C1F2E] rounded-xl border border-[#e5eaef] dark:border-white/[0.06] p-5">
-            <div class="flex items-start justify-between mb-4">
-                <div class="w-11 h-11 rounded-lg bg-gradient-to-br from-[#539BFF] to-[#5D87FF] flex items-center justify-center">
-                    <i data-lucide="fuel" class="w-5 h-5 text-white"></i>
+        <div class="kpi-card bg-white dark:bg-[#111a30]/70 rounded-xl border border-[#e5eaef] dark:border-white/[0.06] p-3 sm:p-5">
+            <div class="flex items-start justify-between mb-2 sm:mb-4">
+                <div class="w-8 h-8 sm:w-11 sm:h-11 rounded-lg bg-gradient-to-br from-[#539BFF] to-[#5D87FF] flex items-center justify-center">
+                    <i data-lucide="fuel" class="w-3.5 h-3.5 sm:w-5 sm:h-5 text-white"></i>
                 </div>
-                <span class="inline-flex items-center gap-0.5 text-[11px] font-semibold text-ink-400 bg-ink-100 dark:bg-white/[0.06] px-1.5 py-0.5 rounded-lg">S/ {{ number_format($kpis['combustible_mes'], 2) }}</span>
+                <span class="inline-flex items-center gap-0.5 text-[10px] sm:text-[11px] font-semibold text-ink-400 bg-ink-100 dark:bg-white/[0.06] px-1 sm:px-1.5 py-0.5 rounded-lg">S/ {{ number_format($kpis['combustible_mes'], 2) }}</span>
             </div>
-            <p class="text-2xl font-bold text-ink-900 dark:text-white">S/ {{ number_format($kpis['combustible_mes'], 2) }}</p>
-            <p class="text-sm text-ink-500 dark:text-white/60 mt-1">Combustible del Mes</p>
-            <div class="flex items-center gap-1.5 mt-3">
-                <div class="flex-1 h-1.5 rounded-full bg-ink-100 dark:bg-white/[0.06]">
+            <p class="text-base sm:text-2xl font-bold text-ink-900 dark:text-white sm:truncate">S/ {{ number_format($kpis['combustible_mes'], 2) }}</p>
+            <p class="text-[11px] sm:text-sm text-ink-500 dark:text-white/60 mt-0.5 sm:mt-1">Combustible del Mes</p>
+            <div class="flex items-center gap-1 sm:gap-1.5 mt-2 sm:mt-3">
+                <div class="flex-1 h-1 sm:h-1.5 rounded-full bg-ink-100 dark:bg-white/[0.06]">
                     <div class="h-full rounded-full bg-gradient-to-r from-[#539BFF] to-[#5D87FF]" style="width:{{ $kpis['vehiculos_total'] > 0 ? min(100, $kpis['vehiculos_uso'] / $kpis['vehiculos_total'] * 100) : 0 }}%"></div>
                 </div>
-                <span class="text-xs font-semibold text-ink-500 dark:text-white/60">{{ $kpis['vehiculos_total'] > 0 ? round($kpis['vehiculos_uso'] / $kpis['vehiculos_total'] * 100) : 0 }}%</span>
+                <span class="text-[10px] sm:text-xs font-semibold text-ink-500 dark:text-white/60">{{ $kpis['vehiculos_total'] > 0 ? round($kpis['vehiculos_uso'] / $kpis['vehiculos_total'] * 100) : 0 }}%</span>
             </div>
         </div>
     </div>
 
     {{-- Quick Actions --}}
-    <div class="flex items-center gap-3 mb-6">
-        <a href="{{ route('olimpo.ocurrencias') }}" class="quick-action quick-action-primary">
-            <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>Nueva ocurrencia
+    <div class="flex flex-wrap items-center gap-2 mb-6">
+        <a href="{{ route('olimpo.ocurrencias') }}" class="quick-action quick-action-primary text-xs">
+            <i data-lucide="plus-circle" class="w-3.5 h-3.5 shrink-0"></i>
+            <span class="hidden sm:inline">Nueva ocurrencia</span>
+            <span class="sm:hidden">Ocurrencia</span>
         </a>
-        <a href="{{ route('olimpo.personal') }}" class="quick-action quick-action-success">
-            <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>Registrar personal
+        <a href="{{ route('olimpo.personal') }}" class="quick-action quick-action-success text-xs">
+            <i data-lucide="user-plus" class="w-3.5 h-3.5 shrink-0"></i>
+            <span class="hidden sm:inline">Registrar personal</span>
+            <span class="sm:hidden">Personal</span>
         </a>
-        <a href="{{ route('olimpo.asistencia') }}" class="quick-action quick-action-warning">
-            <i data-lucide="calendar" class="w-3.5 h-3.5"></i>Tomar asistencia
+        <a href="{{ route('olimpo.asistencia') }}" class="quick-action quick-action-warning text-xs">
+            <i data-lucide="calendar" class="w-3.5 h-3.5 shrink-0"></i>
+            <span class="hidden sm:inline">Tomar asistencia</span>
+            <span class="sm:hidden">Asistencia</span>
         </a>
-        <a href="{{ route('olimpo.control-vehiculos') }}" class="quick-action quick-action-danger">
-            <i data-lucide="truck" class="w-3.5 h-3.5"></i>Registrar vehículo
+        <a href="{{ route('olimpo.control-vehiculos') }}" class="quick-action quick-action-danger text-xs">
+            <i data-lucide="truck" class="w-3.5 h-3.5 shrink-0"></i>
+            <span class="hidden sm:inline">Registrar vehículo</span>
+            <span class="sm:hidden">Vehículo</span>
         </a>
     </div>
 
     {{-- Main 2-col Grid --}}
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-5 mb-4 sm:mb-6">
         {{-- Activity Timeline --}}
-        <div class="lg:col-span-2 bg-white dark:bg-[#1C1F2E] rounded-xl border border-[#e5eaef] dark:border-white/[0.06]">
-            <div class="flex items-center justify-between px-5 py-4 border-b border-[#e5eaef] dark:border-white/[0.06]">
-                <h3 class="text-sm font-bold text-ink-900 dark:text-white flex items-center gap-2">
-                    <i data-lucide="activity" class="w-4 h-4 text-[#5D87FF]"></i>Actividad Reciente
+        <div class="lg:col-span-2 bg-white dark:bg-[#111a30]/70 rounded-xl border border-[#e5eaef] dark:border-white/[0.06]">
+            <div class="flex items-center justify-between px-3 sm:px-5 py-2.5 sm:py-4 border-b border-[#e5eaef] dark:border-white/[0.06]">
+                <h3 class="text-xs sm:text-sm font-bold text-ink-900 dark:text-white flex items-center gap-1.5 sm:gap-2">
+                    <i data-lucide="activity" class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#5D87FF]"></i>Actividad Reciente
                 </h3>
-                <a href="{{ route('olimpo.ocurrencias') }}" class="text-xs font-semibold text-[#5D87FF]">Ver todo →</a>
+                <a href="{{ route('olimpo.ocurrencias') }}" class="text-[10px] sm:text-xs font-semibold text-[#5D87FF]">Ver todo →</a>
             </div>
-            <div class="p-5">
+            <div class="p-3 sm:p-5">
                 @php $items = count($ocurrenciasHoy) > 0 ? $ocurrenciasHoy : $ocurrenciasRecientes; @endphp
                 @if(count($items) > 0)
                     @foreach(array_slice($items, 0, 6) as $o)
@@ -174,7 +184,7 @@
         {{-- Right column --}}
         <div class="flex flex-col gap-5">
             {{-- Attendance --}}
-            <div class="bg-white dark:bg-[#1C1F2E] rounded-xl border border-[#e5eaef] dark:border-white/[0.06]">
+            <div class="bg-white dark:bg-[#111a30]/70 rounded-xl border border-[#e5eaef] dark:border-white/[0.06]">
                 <div class="flex items-center justify-between px-5 py-4 border-b border-[#e5eaef] dark:border-white/[0.06]">
                     <h3 class="text-sm font-bold text-ink-900 dark:text-white flex items-center gap-2">
                         <i data-lucide="calendar-check" class="w-4 h-4 text-[#13DEB9]"></i>Asistencia Hoy
@@ -204,7 +214,7 @@
             </div>
 
             {{-- Notifications --}}
-            <div class="bg-white dark:bg-[#1C1F2E] rounded-xl border border-[#e5eaef] dark:border-white/[0.06]">
+            <div class="bg-white dark:bg-[#111a30]/70 rounded-xl border border-[#e5eaef] dark:border-white/[0.06]">
                 <div class="flex items-center justify-between px-5 py-4 border-b border-[#e5eaef] dark:border-white/[0.06]">
                     <h3 class="text-sm font-bold text-ink-900 dark:text-white flex items-center gap-2">
                         <i data-lucide="bell" class="w-4 h-4 text-[#FFAE1F]"></i>Notificaciones
@@ -233,7 +243,7 @@
     {{-- Bottom 3-col Grid --}}
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
         {{-- Calendar Widget --}}
-        <div class="bg-white dark:bg-[#1C1F2E] rounded-xl border border-[#e5eaef] dark:border-white/[0.06]">
+        <div class="bg-white dark:bg-[#111a30]/70 rounded-xl border border-[#e5eaef] dark:border-white/[0.06]">
             <div class="flex items-center justify-between px-5 py-4 border-b border-[#e5eaef] dark:border-white/[0.06]">
                 <h3 class="text-sm font-bold text-ink-900 dark:text-white flex items-center gap-2">
                     <i data-lucide="calendar" class="w-4 h-4 text-[#5D87FF]"></i>{{ now()->isoFormat('MMMM YYYY') }}
@@ -282,7 +292,7 @@
         </div>
 
         {{-- Occurrences by Type --}}
-        <div class="bg-white dark:bg-[#1C1F2E] rounded-xl border border-[#e5eaef] dark:border-white/[0.06]">
+        <div class="bg-white dark:bg-[#111a30]/70 rounded-xl border border-[#e5eaef] dark:border-white/[0.06]">
             <div class="flex items-center justify-between px-5 py-4 border-b border-[#e5eaef] dark:border-white/[0.06]">
                 <h3 class="text-sm font-bold text-ink-900 dark:text-white flex items-center gap-2">
                     <i data-lucide="trending-up" class="w-4 h-4 text-[#13DEB9]"></i>Ocurrencias x Tipo
@@ -310,7 +320,7 @@
         </div>
 
         {{-- Personnel Online --}}
-        <div class="bg-white dark:bg-[#1C1F2E] rounded-xl border border-[#e5eaef] dark:border-white/[0.06]">
+        <div class="bg-white dark:bg-[#111a30]/70 rounded-xl border border-[#e5eaef] dark:border-white/[0.06]">
             <div class="flex items-center justify-between px-5 py-4 border-b border-[#e5eaef] dark:border-white/[0.06]">
                 <h3 class="text-sm font-bold text-ink-900 dark:text-white flex items-center gap-2">
                     <i data-lucide="users" class="w-4 h-4 text-[#5D87FF]"></i>Personal en Línea
@@ -343,7 +353,7 @@
 
     {{-- Charts Row --}}
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <div class="bg-white dark:bg-[#1C1F2E] rounded-xl border border-[#e5eaef] dark:border-white/[0.06]">
+        <div class="bg-white dark:bg-[#111a30]/70 rounded-xl border border-[#e5eaef] dark:border-white/[0.06]">
             <div class="flex items-center justify-between px-5 py-4 border-b border-[#e5eaef] dark:border-white/[0.06]">
                 <h3 class="text-sm font-bold text-ink-900 dark:text-white flex items-center gap-2">
                     <i data-lucide="pie-chart" class="w-4 h-4 text-[#5D87FF]"></i>Ocurrencias por Tipo
@@ -394,7 +404,7 @@
             </div>
         </div>
 
-        <div class="bg-white dark:bg-[#1C1F2E] rounded-xl border border-[#e5eaef] dark:border-white/[0.06]">
+        <div class="bg-white dark:bg-[#111a30]/70 rounded-xl border border-[#e5eaef] dark:border-white/[0.06]">
             <div class="flex items-center justify-between px-5 py-4 border-b border-[#e5eaef] dark:border-white/[0.06]">
                 <h3 class="text-sm font-bold text-ink-900 dark:text-white flex items-center gap-2">
                     <i data-lucide="bar-chart-3" class="w-4 h-4 text-[#5D87FF]"></i>Tendencia Semanal

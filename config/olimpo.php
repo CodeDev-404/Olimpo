@@ -36,6 +36,23 @@ return [
             'icon' => 'bell',
             'desc' => 'Notificaciones, cumpleaños y pendientes del personal',
             'group' => 'Gestión',
+            'children' => ['olimpo.cumpleanos', 'olimpo.otros-pendientes'],
+        ],
+        'olimpo.cumpleanos' => [
+            'slug' => 'cumpleanos',
+            'title' => 'Cumpleaños',
+            'icon' => 'cake',
+            'desc' => 'Registro y control de cumpleaños del personal',
+            'group' => 'Gestión',
+            'sidebar' => false,
+        ],
+        'olimpo.otros-pendientes' => [
+            'slug' => 'otros-pendientes',
+            'title' => 'Otros Pendientes',
+            'icon' => 'clipboard-list',
+            'desc' => 'Gestión de otras tareas y recordatorios',
+            'group' => 'Gestión',
+            'sidebar' => false,
         ],
         'olimpo.control-vehiculos' => [
             'slug' => 'control-vehiculos',
@@ -50,13 +67,6 @@ return [
             'icon' => 'fingerprint',
             'desc' => 'Registro de lectura biométrica PALM',
             'group' => 'Control',
-        ],
-        'olimpo.cumpleanos' => [
-            'slug' => 'cumpleanos',
-            'title' => 'Cumpleaños',
-            'icon' => 'cake',
-            'desc' => 'Registro y control de cumpleaños del personal',
-            'group' => 'Datos',
         ],
         'olimpo.mas-herramientas' => [
             'slug' => 'mas-herramientas',

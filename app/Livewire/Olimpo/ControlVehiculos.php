@@ -242,16 +242,18 @@ class ControlVehiculos extends Component
         } else {
             $this->selectedIds[] = $id;
         }
+        $this->selectedIds = array_values($this->selectedIds);
     }
 
     public function toggleSelectAll()
     {
-        $currentIds = $this->registros->pluck('id')->toArray();
-        $allSelected = !array_diff($currentIds, $this->selectedIds);
+        $currentIds = array_map('intval', $this->registros->pluck('id')->toArray());
+        $current = array_values(array_unique(array_map('intval', $this->selectedIds)));
+        $allSelected = $currentIds && !array_diff($currentIds, $current);
         if ($allSelected) {
-            $this->selectedIds = array_diff($this->selectedIds, $currentIds);
+            $this->selectedIds = array_values(array_diff($current, $currentIds));
         } else {
-            $this->selectedIds = array_merge($this->selectedIds, $currentIds);
+            $this->selectedIds = array_values(array_unique(array_merge($current, $currentIds)));
         }
     }
 
@@ -440,16 +442,18 @@ class ControlVehiculos extends Component
         } else {
             $this->selectedIdsCombustible[] = $id;
         }
+        $this->selectedIdsCombustible = array_values($this->selectedIdsCombustible);
     }
 
     public function toggleSelectAllCombustible()
     {
-        $currentIds = $this->registrosCombustibles->pluck('id')->toArray();
-        $allSelected = !array_diff($currentIds, $this->selectedIdsCombustible);
+        $currentIds = array_map('intval', $this->registrosCombustibles->pluck('id')->toArray());
+        $current = array_values(array_unique(array_map('intval', $this->selectedIdsCombustible)));
+        $allSelected = $currentIds && !array_diff($currentIds, $current);
         if ($allSelected) {
-            $this->selectedIdsCombustible = array_diff($this->selectedIdsCombustible, $currentIds);
+            $this->selectedIdsCombustible = array_values(array_diff($current, $currentIds));
         } else {
-            $this->selectedIdsCombustible = array_merge($this->selectedIdsCombustible, $currentIds);
+            $this->selectedIdsCombustible = array_values(array_unique(array_merge($current, $currentIds)));
         }
     }
 
@@ -523,13 +527,13 @@ class ControlVehiculos extends Component
     {
         if ($this->_combAuto !== null) return $this->_combAuto;
         return $this->_combAuto = cache()->remember('cv_comb_auto', 300, function () {
-            $sql = "SELECT 'categorias' AS src, categoria AS val FROM combustible WHERE categoria IS NOT NULL AND categoria != ''
-                    UNION SELECT 'clases', clase FROM combustible WHERE clase IS NOT NULL AND clase != ''
-                    UNION SELECT 'marcas', marca FROM combustible WHERE marca IS NOT NULL AND marca != ''
-                    UNION SELECT 'placas', placa FROM combustible WHERE placa IS NOT NULL AND placa != ''
-                    UNION SELECT 'modelos', modelo FROM combustible WHERE modelo IS NOT NULL AND modelo != ''
-                    UNION SELECT 'conductores', conductor FROM combustible WHERE conductor IS NOT NULL AND conductor != ''
-                    UNION SELECT 'combustibles', combustible FROM combustible WHERE combustible IS NOT NULL AND combustible != ''";
+            $sql = "SELECT 'categorias' AS src, categoria AS val FROM combustibles WHERE categoria IS NOT NULL AND categoria != ''
+                    UNION SELECT 'clases', clase FROM combustibles WHERE clase IS NOT NULL AND clase != ''
+                    UNION SELECT 'marcas', marca FROM combustibles WHERE marca IS NOT NULL AND marca != ''
+                    UNION SELECT 'placas', placa FROM combustibles WHERE placa IS NOT NULL AND placa != ''
+                    UNION SELECT 'modelos', modelo FROM combustibles WHERE modelo IS NOT NULL AND modelo != ''
+                    UNION SELECT 'conductores', conductor FROM combustibles WHERE conductor IS NOT NULL AND conductor != ''
+                    UNION SELECT 'combustibles', combustible FROM combustibles WHERE combustible IS NOT NULL AND combustible != ''";
             $rows = DB::select($sql);
             $data = ['categorias' => [], 'clases' => [], 'marcas' => [], 'placas' => [], 'modelos' => [], 'conductores' => [], 'combustibles' => []];
             foreach ($rows as $r) {
@@ -567,21 +571,21 @@ class ControlVehiculos extends Component
         $query = ControlVehiculo::query();
 
         if ($this->search) {
-            $q = $this->search;
-            $query->where(function($qry) use ($q) {
-                $qry->where('chofer', 'like', "%{$q}%")
-                    ->orWhere('placa', 'like', "%{$q}%")
-                    ->orWhere('marca', 'like', "%{$q}%")
-                    ->orWhere('modelo', 'like', "%{$q}%")
-                    ->orWhere('clase', 'like', "%{$q}%")
-                    ->orWhere('observacion', 'like', "%{$q}%");
-            });
+            $query->where(accent_insensitive_search([
+                'chofer', 'placa', 'marca', 'modelo', 'clase', 'observacion',
+            ], $this->search));
         }
 
         if ($this->filterFecha) {
             $f = \Carbon\Carbon::parse($this->filterFecha);
             $query->where('fecha', $f->format('d/m/Y'));
         }
+
+        $totalRegistros = (clone $query)->count();
+        $enRuta = (clone $query)->where(function ($q) {
+            $q->whereNull('hora_ingreso')->orWhere('hora_ingreso', '');
+        })->count();
+        $retornados = $totalRegistros - $enRuta;
 
         $registros = $query->orderBy('fecha', 'desc')
             ->orderBy('id', 'desc')
@@ -591,22 +595,18 @@ class ControlVehiculos extends Component
         $queryComb = Combustible::query();
 
         if ($this->searchCombustible) {
-            $q = $this->searchCombustible;
-            $queryComb->where(function($qry) use ($q) {
-                $qry->where('combustible', 'like', "%{$q}%")
-                    ->orWhere('conductor', 'like', "%{$q}%")
-                    ->orWhere('placa', 'like', "%{$q}%")
-                    ->orWhere('marca', 'like', "%{$q}%")
-                    ->orWhere('modelo', 'like', "%{$q}%")
-                    ->orWhere('clase', 'like', "%{$q}%")
-                    ->orWhere('categoria', 'like', "%{$q}%");
-            });
+            $queryComb->where(accent_insensitive_search([
+                'combustible', 'conductor', 'placa', 'marca', 'modelo', 'clase', 'categoria',
+            ], $this->searchCombustible));
         }
 
         if ($this->filterFechaCombustible) {
             $f = \Carbon\Carbon::parse($this->filterFechaCombustible);
             $queryComb->where('fecha', $f->format('d/m/Y'));
         }
+
+        $totalGalones = (clone $queryComb)->sum('galones');
+        $totalMonto = (clone $queryComb)->sum('total');
 
         $registrosCombustibles = $queryComb->orderBy('fecha', 'desc')
             ->orderBy('id', 'desc')
@@ -615,6 +615,11 @@ class ControlVehiculos extends Component
         return view('livewire.olimpo.control-vehiculos', [
             'registros' => $registros,
             'registrosCombustibles' => $registrosCombustibles,
+            'totalRegistros' => $totalRegistros,
+            'enRuta' => $enRuta,
+            'retornados' => $retornados,
+            'totalGalones' => $totalGalones,
+            'totalMonto' => $totalMonto,
             'choferes' => $this->choferes,
             'placas' => $this->placas,
             'marcas' => $this->marcas,

@@ -11,3 +11,9 @@
 Thumbs.db
 public/hot
 public/build
+
+/.backup/
+/check-encoding.ps1
+/nexo-chrome/
+/paletas.txt
+.phpunit.result.cache

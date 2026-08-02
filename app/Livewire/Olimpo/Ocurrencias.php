@@ -128,22 +128,21 @@ class Ocurrencias extends Component
         }
 
         if ($this->search) {
-            $q = $this->search;
-            $query->where(function($qry) use ($q) {
-                $qry->where('ocurrencias.persona_nombre', 'like', "%{$q}%")
-                    ->orWhere('ocurrencias.tipo', 'like', "%{$q}%")
-                    ->orWhere('ocurrencias.detalles', 'like', "%{$q}%")
-                    ->orWhere('ocurrencias.otro', 'like', "%{$q}%")
-                    ->orWhere('ocurrencias.destino', 'like', "%{$q}%")
-                    ->orWhere('ocurrencias.motivo', 'like', "%{$q}%")
-                    ->orWhere('ocurrencias.vehiculo', 'like', "%{$q}%")
-                    ->orWhere('ocurrencias.observacion', 'like', "%{$q}%")
-                    ->orWhere('ocurrencias.fecha', 'like', "%{$q}%")
-                    ->orWhere('personal.cargo', 'like', "%{$q}%")
-                    ->orWhere('personal.alias', 'like', "%{$q}%")
-                    ->orWhere('personal.documento', 'like', "%{$q}%")
-                    ->orWhere('personal.telefono', 'like', "%{$q}%");
-            });
+            $query->where(accent_insensitive_search([
+                'ocurrencias.persona_nombre',
+                'ocurrencias.tipo',
+                'ocurrencias.detalles',
+                'ocurrencias.otro',
+                'ocurrencias.destino',
+                'ocurrencias.motivo',
+                'ocurrencias.vehiculo',
+                'ocurrencias.observacion',
+                'ocurrencias.fecha',
+                'personal.cargo',
+                'personal.alias',
+                'personal.documento',
+                'personal.telefono',
+            ], $this->search));
         }
 
         if ($this->search || $this->filterFecha
@@ -179,12 +178,24 @@ class Ocurrencias extends Component
     }
 
     public function updatedSearch() {}
-    public function updatedFilterFecha() {}
+    public function updatedFilterFecha()
+    {
+        if ($this->filterFecha) {
+            $this->filterMesDesde = '';
+            $this->filterMesHasta = '';
+        }
+    }
     public function updatedFilterHoraDesde() {}
     public function updatedFilterHoraHasta() {}
     public function updatedFilterTurno() {}
-    public function updatedFilterMesDesde() {}
-    public function updatedFilterMesHasta() {}
+    public function updatedFilterMesDesde()
+    {
+        if ($this->filterMesDesde) $this->filterFecha = '';
+    }
+    public function updatedFilterMesHasta()
+    {
+        if ($this->filterMesHasta) $this->filterFecha = '';
+    }
 
     public function addPersona()
     {
